@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>横断面网络分析 - Psych统计自习室</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 完全复用主页面CSS，确保风格一致 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #4a6fa5;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #2c4c75;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 30px;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+        }
+        
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover:after {
+            width: 100%;
+        }
+        
+        /* 课程详情区域 */
+        .course-detail {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 40px;
+            margin: 50px auto;
+            max-width: 900px;
+        }
+        
+        .course-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .course-cover {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .course-header h1 {
+            color: #2c4c75;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .course-header .price {
+            color: #e74c3c;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .course-header .qq-contact {
+            display: inline-flex;
+            align-items: center;
+            color: #4a6fa5;
+            font-size: 1.1rem;
+        }
+        
+        .course-header .qq-contact i {
+            margin-right: 8px;
+        }
+        
+        .course-content {
+            margin-bottom: 30px;
+        }
+        
+        .course-content h2 {
+            color: #2c4c75;
+            font-size: 1.5rem;
+            margin: 25px 0 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .course-content h2 i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .course-content p {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        
+        .course-content ul {
+            padding-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .course-content li {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+        
+        /* 密码验证模块 */
+        .password-verify {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .password-verify h2 {
+            color: #2c4c75;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .verify-form {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .verify-form input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        .verify-form input:focus {
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+        }
+        
+        .verify-form button {
+            padding: 12px 25px;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .verify-form button:hover {
+            background: #2c4c75;
+        }
+        
+        .verify-error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        /* 隐藏的链接区域 */
+        .link-area {
+            background: #f0f7ff;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #bfdbfe;
+            display: none; /* 默认隐藏 */
+        }
+        
+        .link-area h2 {
+            color: #2c4c75;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .link-item i {
+            color: #4a6fa5;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .link-item a {
+            font-size: 1.05rem;
+            flex: 1;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2530 100%);
+            color: white;
+            padding: 50px 0 20px;
+            margin-top: 50px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 22px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-section h3 i {
+            margin-right: 10px;
+            color: #a4bfef;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-links a i {
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 1px solid #3a4b5c;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .course-detail {
+                padding: 25px;
+            }
+            
+            .course-cover {
+                height: 180px;
+                font-size: 3rem;
+            }
+            
+            .course-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .verify-form {
+                flex-direction: column;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏（与主页面一致） -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室</div>
+                <ul class="nav-links">
+                    <li><a href="index.html"><i class="fas fa-home"></i>首页</a></li>
+                    <li><a href="index.html#news"><i class="fas fa-newspaper"></i>新闻资讯</a></li>
+                    <li><a href="index.html#courses"><i class="fas fa-graduation-cap"></i>课程申请</a></li>
+                    <li><a href="index.html#data"><i class="fas fa-database"></i>数据开放</a></li>
+                    <li><a href="index.html#join"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 课程详情区域 -->
+    <div class="container">
+        <div class="course-detail">
+            <!-- 课程封面与基本信息 -->
+            <div class="course-header">
+                <div class="course-cover">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h1>横断面网络分析</h1>
+                <div class="price">课程费用：200元</div>
+                <div class="qq-contact">
+                    <i class="fab fa-qq"></i> 联系官方QQ：3173363852 获取密码
+                </div>
+            </div>
+
+            <!-- 课程详细介绍 -->
+            <div class="course-content">
+                <h2><i class="fas fa-info-circle"></i>课程简介</h2>
+                <p>横断面网络分析是心理学、医学等领域探索变量间复杂关系的核心方法，尤其适用于情绪障碍、人格特质、心理健康等多维度数据的可视化与量化分析。本课程从基础理论到实战操作，帮助学员掌握网络分析的完整工作流，解决实际研究中的“变量关联模糊”“维度划分困难”等问题。</p>
+
+                <h2><i class="fas fa-chalkboard-teacher"></i>适合人群</h2>
+                <ul>
+                    <li>心理学、社会学、医学等专业的本科生/研究生；</li>
+                    <li>需要用网络分析处理多变量数据的科研人员；</li>
+                    <li>有基础统计知识（如相关分析、回归），想进阶复杂数据方法的学习者。</li>
+                </ul>
+
+                <h2><i class="fas fa-list-check"></i>学习内容</h2>
+                <ul>
+                    <li>网络分析基础：节点、边、密度、中心性（度中心性、介数中心性等）概念；</li>
+                    <li>实战操作：用R语言（qgraph、igraph包）构建横断面网络；</li>
+                    <li>结果解读：网络结构可视化、中心性指标分析；</li>
+                    <li>常见问题解决：网络稳定性检验、样本量确定、结果可重复性验证。</li>
+                </ul>
+
+                <h2><i class="fas fa-file-download"></i>资料包含</h2>
+                <ul>
+                    <li>课程回放；</li>
+                    <li>R语言代码（可直接运行，含注释）；</li>
+                    <li>示例数据集（心理学常用量表数据，如抑郁、焦虑量表）；</li>
+                </ul>
+            </div>
+
+            <!-- 密码验证模块 -->
+            <div class="password-verify">
+                <h2>输入密码查看申请与下载链接</h2>
+                <div class="verify-form">
+                    <input type="password" id="coursePassword" placeholder="请输入QQ获取的密码">
+                    <button id="verifyBtn">验证</button>
+                </div>
+                <div class="verify-error" id="errorMsg">密码错误，请重新输入！</div>
+            </div>
+
+            <!-- 验证通过后显示的链接区域 -->
+            <div class="link-area" id="linkArea">
+                <h2>课程申请与资料下载</h2>
+                <div class="link-list">
+                    <div class="link-item">
+                        <i class="fas fa-link"></i>
+                        <a href="https://meeting.tencent.com/crm/KwjyrYal82" target="_blank">课程申请链接（需审批）</a>
+                    </div>
+                    <div class="link-item">
+                        <i class="fas fa-file-archive"></i>
+                        <a href="https://pan.baidu.com/s/1-jlOd655s1Pee0IP0vsZ0Q?pwd=vgpp" download>资料压缩包下载（含PPT+代码+数据）</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚（与主页面一致） -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-envelope"></i>联系我们</h3>
+                    <p>邮箱: 3173363852@qq.com</p>
+                    <p>微信公众号: Psych统计自习室</p>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-link"></i>快速链接</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-question-circle"></i>常见问题</a></li>
+                        <li><a href="#"><i class="fas fa-file-download"></i>资源申请</a></li>
+                        <li><a href="#"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                        <li><a href="#"><i class="fas fa-handshake"></i>合作机会</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-handshake"></i>合作伙伴</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-university"></i>中国心理学会</a></li>
+                        <li><a href="#"><i class="fas fa-book"></i>心理学报</a></li>
+                        <li><a href="#"><i class="fas fa-book-open"></i>心理科学进展</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 心理统计自习室. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 密码验证JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. 动态更新年份
+            document.querySelector('.copyright p').innerHTML = `&copy; ${new Date().getFullYear()} 心理统计自习室. 保留所有权利.`;
+
+            // 2. 密码验证逻辑（可修改正确密码）
+            const correctPassword = 'psych2024'; // 正确密码，可自行修改
+            const passwordInput = document.getElementById('coursePassword');
+            const verifyBtn = document.getElementById('verifyBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const linkArea = document.getElementById('linkArea');
+
+            verifyBtn.addEventListener('click', function() {
+                const inputPassword = passwordInput.value.trim();
+                if (inputPassword === correctPassword) {
+                    // 密码正确：隐藏错误提示，显示链接区域
+                    errorMsg.style.display = 'none';
+                    linkArea.style.display = 'block';
+                } else {
+                    // 密码错误：显示错误提示，清空输入
+                    errorMsg.style.display = 'block';
+                    passwordInput.value = '';
+                }
+            });
+
+            // 支持回车键验证
+            passwordInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    verifyBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

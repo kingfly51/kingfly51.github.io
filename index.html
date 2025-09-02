@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psych统计自习室 - 学习与交流平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 基础样式设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #4a6fa5;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #2c4c75;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 30px;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+        }
+        
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover:after {
+            width: 100%;
+        }
+        
+        /* 英雄区域样式 */
+        .hero {
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+            background-size: 100% 100%;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.95;
+        }
+        
+        /* 主要内容区域样式 */
+        .section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 35px;
+            margin-bottom: 40px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-title {
+            color: #2c4c75;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 12px;
+            color: #4a6fa5;
+        }
+        
+        /* 关于我们样式 */
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+        
+        .about-text {
+            flex: 2;
+        }
+        
+        .about-text p {
+            margin-bottom: 18px;
+            font-size: 1.05rem;
+        }
+        
+        .about-image {
+            flex: 1;
+            background: linear-gradient(135deg, #e4ebf5 0%, #c9d6ef 100%);
+            height: 250px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6a93cb;
+            font-size: 1.2rem;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .about-image:before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(45deg);
+            animation: reflect 3s ease-in-out infinite;
+        }
+        
+        @keyframes reflect {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* 动态资讯样式 */
+        .news-list {
+            list-style: none;
+        }
+        
+        .news-item {
+            padding: 18px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+        
+        .news-item:hover {
+            background-color: #f9fafc;
+        }
+        
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        
+        .news-date {
+            background: #4a6fa5;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 15px;
+            min-width: 95px;
+            text-align: center;
+        }
+        
+        /* 成员展示样式 - 修复为横向排列 */
+        .members-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .member-card {
+            text-align: center;
+            background: linear-gradient(to bottom, #ffffff 0%, #f7f9fc 100%);
+            padding: 25px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eaeaea;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .member-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #6a93cb, #a4bfef);
+        }
+        
+        .member-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .member-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.8rem;
+            box-shadow: 0 5px 15px rgba(106, 147, 203, 0.3);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .member-card:hover .member-avatar {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(106, 147, 203, 0.4);
+        }
+        
+        .member-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.3rem;
+            color: #2c4c75;
+        }
+        
+        .member-role {
+            color: #6a93cb;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        
+        .member-card p {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+        
+        /* 课程资源样式 */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .course-card {
+            background: linear-gradient(to bottom, #ffffff 0%, #f7f9fc 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #eaeaea;
+        }
+        
+        .course-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .course-image {
+            height: 180px;
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .course-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .course-content {
+            padding: 20px;
+        }
+        
+        .course-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c4c75;
+            margin-bottom: 10px;
+        }
+        
+        .course-description {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2530 100%);
+            color: white;
+            padding: 50px 0 20px;
+            margin-top: 70px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 22px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-section h3 i {
+            margin-right: 10px;
+            color: #a4bfef;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-links a i {
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 1px solid #3a4b5c;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1100px) {
+            .members-container {
+                justify-content: center;
+            }
+            
+            .member-card {
+                max-width: 320px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .members-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .member-card {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .courses-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .about-content {
+                flex-direction: column;
+            }
+            
+            .about-image {
+                width: 100%;
+                margin-top: 20px;
+            }
+            
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .nav-links {
+                display: none; /* 简化移动端导航 */
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 35px;
+            }
+            
+            .courses-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室</div>
+            <ul class="nav-links">
+                <li><a href="#"><i class="fas fa-home"></i>首页</a></li>
+                <li><a href="#"><i class="fas fa-newspaper"></i>新闻资讯</a></li>
+                <li><a href="#"><i class="fas fa-graduation-cap"></i>课程申请</a></li>
+                <li><a href="#"><i class="fas fa-database"></i>数据开放</a></li>
+                <li><a href="#"><i class="fas fa-user-plus"></i>加入我们</a></li>
+            </ul>
+        </nav>
+    </div>
+    </header>
+
+    <!-- 英雄区域 -->
+    <section class="hero">
+        <div class="container">
+            <h1>欢迎来到Psych统计自习室</h1>
+            <p>一个专注于心理学统计方法学习、交流与资源共享的平台</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- 关于我们 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-info-circle"></i>关于我们</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>Psych统计自习室成立于2024年，旨在为心理学学生和研究者提供一个学习统计方法、交流研究经验、分享学术资源的平台。</p>
+                    <p>团队成员是由来自中科院心理所、北京师范大学，西南大学，澳门大学等高校在读硕士、博士研究生组成的。Psych统计自习室旨在关注心理学、精神病学领域的最前沿的系列研究，并做前沿统计知识的分享。</p>
+                    <p>无论你是心理学初学者还是资深研究者，都能在这里找到有价值的内容和志同道合的伙伴。</p>
+                </div>
+                <div class="about-image">
+                    <img src="psych_logo2.jpg" alt="Psych统计自习室Logo" class="psych-logo">
+                </div>
+            </div>
+        </section>
+
+        <!-- 最新动态 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-newspaper"></i>最新动态</h2>
+            <ul class="news-list">
+                <li class="news-item">
+                    <span class="news-date">2025-07-23</span>
+                    <a href="https://mp.weixin.qq.com/s/lHDYYpnjHRjkrYKaszGDSA" target="_blank">2025年Psych统计自习室暑期培训班开班通知</a>
+                </li>
+                <li class="news-item">
+                    <span class="news-date">2025-03-09</span>
+                    <a href="https://mp.weixin.qq.com/s/tMYq-1cE52oqPRpg0Ys5QA" target="_blank">Psych统计自习室统计咨询服务来啦</a>
+                </li>
+                <li class="news-item">
+                    <span class="news-date">2024-12-21</span>
+                    <a href="https://mp.weixin.qq.com/s/0bja8uxLqyvrGHPpRMDLZg" target="_blank">Psych统计自习室寒假培训班火热报名中</a>
+                </li>
+                <li class="news-item">
+                    <span class="news-date">2024-07-06</span>
+                    <a href="https://mp.weixin.qq.com/s/1XxuocvqXPu6NrWUL5gX4Q" target="_blank">网络分析集训班火热报名中！</a>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 核心成员 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-users"></i>团队负责人</h2>
+            <div class="members-container">
+                <!-- 王飞卡片 -->
+                <a href="member-wangfei.html" class="member-card">
+                    <div class="avatar-container">
+                     <img src="Fei-Wang-413.png" alt="王飞" class="member-avatar">
+                    </div>
+                    <div class="member-name">王飞</div>
+                    <div class="member-role">中国科学院心理研究所</div>
+                    <p>擅长统计：心理测量；网络分析；各类高级心理统计</p>
+                    <p>Psych统计自习室：摘星</p>
+                </a>
+                
+                <!-- 孟小暄卡片 -->
+                <a href="member-mxx.html" class="member-card">
+                    <div class="avatar-container">
+                     <img src="mxx.png" alt="孟小暄" class="member-avatar">
+                    </div>
+                    <div class="member-name">孟小暄</div>
+                    <div class="member-role">天津医科大学护理学院</div>
+                    <p>擅长统计：贝叶斯网络分析；预测模型</p>
+                    <p>Psych统计自习室：莲花清值</p>
+                </a>
+                
+                <!-- 武运筹卡片 -->
+                <a href="member-wuyunchou.html" class="member-card">
+                    <div class="avatar-container">
+                     <img src="wuyunchou.jpg" alt="武运筹" class="member-avatar">
+                    </div>
+                    <div class="member-name">武运筹</div>
+                    <div class="member-role">西南大学心理学部</div>
+                    <p>擅长统计：网络分析；量表简化技术</p>
+                    <p>Psych统计自习室：久久</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- 课程资源 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-graduation-cap"></i>课程资源</h2>
+            <div class="courses-grid">
+                <!-- 课程1 -->
+                <a href="course-network-analysis.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">横断面网络分析</h3>
+                        <p class="course-description">学习如何使用网络分析技术探索变量间的复杂关系</p>
+                    </div>
+                </a>
+                
+                <!-- 课程2 -->
+                <a href="course-ega-factor.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">探索性图分析与因子分析</h3>
+                        <p class="course-description">掌握探索性图分析和传统因子分析的原理与应用</p>
+                    </div>
+                </a>
+                
+                <!-- 课程3 -->
+                <a href="course-cross-lagged.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">交叉滞后面板网络分析</h3>
+                        <p class="course-description">了解交叉滞后模型在网络分析中的应用</p>
+                    </div>
+                </a>
+                
+                <!-- 课程4 -->
+                <a href="course-temporal-network.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">时序网络分析</h3>
+                        <p class="course-description">学习时间序列数据的网络分析方法</p>
+                    </div>
+                </a>
+                
+                <!-- 课程5 -->
+                <a href="course-moderated-network.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">有调节的网络分析</h3>
+                        <p class="course-description">掌握调节变量在网络分析中的处理方法</p>
+                    </div>
+                </a>
+                
+                <!-- 课程6 -->
+                <a href="course-machine-learning.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">机器学习与预测模型</h3>
+                        <p class="course-description">学习机器学习算法在心理学预测建模中的应用</p>
+                    </div>
+                </a>
+                
+                <!-- 课程7 -->
+                <a href="course-network-intervention.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">计算机模拟网络干预</h3>
+                        <p class="course-description">通过计算机模拟研究网络干预效果</p>
+                    </div>
+                </a>
+                
+                <!-- 课程8 -->
+                <a href="course-scale-development.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">量表的开发、汉化与简化</h3>
+                        <p class="course-description">掌握心理学量表的开发、汉化和简化技术</p>
+                    </div>
+                </a>
+                
+                <!-- 课程9 -->
+                <a href="course-mplus.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">基于Mplus的潜变量建模</h3>
+                        <p class="course-description">学习使用Mplus进行潜变量模型分析</p>
+                    </div>
+                </a>
+                
+                <!-- 课程10 -->
+                <a href="course-intensive-longitudinal.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">密集追踪数据的处理</h3>
+                        <p class="course-description">掌握密集追踪数据的处理和分析方法</p>
+                    </div>
+                </a>
+                
+                <!-- 课程11 -->
+                <a href="course-bayesian.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">贝叶斯网络分析</h3>
+                        <p class="course-description">学习贝叶斯方法在网络分析中的应用</p>
+                    </div>
+                </a>
+                
+                <!-- 课程12 -->
+                <a href="course-meta-analysis.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">元分析</h3>
+                        <p class="course-description">掌握元分析的理论基础和实际操作</p>
+                    </div>
+                </a>
+                
+                <!-- 课程13 -->
+                <a href="course-kml.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-object-group"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">kml与kml3d纵向聚类</h3>
+                        <p class="course-description">学习纵向数据的k-means聚类方法</p>
+                    </div>
+                </a>
+                
+                <!-- 课程14 -->
+                <a href="course-riclpm.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-retweet"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">随机截距交叉滞后模型</h3>
+                        <p class="course-description">掌握随机截距交叉滞后模型的应用</p>
+                    </div>
+                </a>
+                
+                <!-- 课程15 -->
+                <a href="course-network-temperature.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">网络分析之网络温度</h3>
+                        <p class="course-description">了解网络温度概念及其在分析中的应用</p>
+                    </div>
+                </a>
+                
+                <!-- 课程16 -->
+                <a href="course-double-machine-learning.html" class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">双重机器学习</h3>
+                        <p class="course-description">学习双重机器学习方法在因果推断中的应用</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-envelope"></i>联系我们</h3>
+                    <p>邮箱: 3173363852@qq.com</p>
+                    <p>微信公众号: Psych统计自习室</p>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-link"></i>快速链接</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-question-circle"></i>常见问题</a></li>
+                        <li><a href="#"><i class="fas fa-file-download"></i>资源申请</a></li>
+                        <li><a href="#"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                        <li><a href="#"><i class="fas fa-handshake"></i>合作机会</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-handshake"></i>合作伙伴</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-university"></i>中国心理学会</a></li>
+                        <li><a href="#"><i class="fas fa-book"></i>心理学报</a></li>
+                        <li><a href="#"><i class="fas fa-book-open"></i>心理科学进展</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 心理统计自习室. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 简单的JavaScript交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为成员卡片添加点击效果
+            const memberCards = document.querySelectorAll('.member-card');
+            memberCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.backgroundColor = '#f0f4f8';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 300);
+                });
+            });
+            
+            // 动态更新年份
+            document.querySelector('.copyright p').innerHTML = `&copy; ${new Date().getFullYear()} 心理统计自习室. 保留所有权利.`;
+        });
+    </script>
+</body>
+</html>
