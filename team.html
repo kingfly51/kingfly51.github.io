@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团队架构 - Psych统计自习室</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #4a6fa5;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #2c4c75;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 30px;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+        }
+        
+        .nav-links a.active {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover:after, .nav-links a.active:after {
+            width: 100%;
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            font-size: 1.05rem;
+        }
+        
+        .breadcrumb li {
+            margin: 0 10px;
+        }
+        
+        .breadcrumb li:after {
+            content: '>';
+            margin-left: 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .breadcrumb li:last-child:after {
+            content: '';
+            margin: 0;
+        }
+        
+        .breadcrumb a {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+        }
+        
+        /* 团队结构图 */
+        .org-chart {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .org-chart h2 {
+            color: #2c4c75;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .org-chart h2 i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .org-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .org-node {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 0 15px 15px;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .org-node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .org-node.lead {
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            color: white;
+        }
+        
+        .org-node h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .org-node p {
+            font-size: 0.95rem;
+            color: #64748b;
+        }
+        
+        .org-node.lead p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .org-connector {
+            width: 2px;
+            height: 30px;
+            background: #cbd5e1;
+            margin: 0 auto;
+        }
+        
+        /* 团队统计 */
+        .team-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 25px;
+            text-align: center;
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .stat-card h3 {
+            color: #2c4c75;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4a6fa5;
+            margin-bottom: 10px;
+        }
+        
+        .stat-desc {
+            color: #64748b;
+            font-size: 1rem;
+        }
+        
+        /* 成员介绍 */
+        .section {
+            margin-bottom: 50px;
+        }
+        
+        .section-title {
+            color: #2c4c75;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .members-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .member-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 25px;
+            transition: all 0.3s ease;
+            display: block;
+            color: inherit;
+        }
+        
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .avatar-container {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 20px;
+            border: 4px solid #f1f5f9;
+        }
+        
+        .member-avatar {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .member-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #2c4c75;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .member-role {
+            color: #4a6fa5;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .member-card p {
+            color: #64748b;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2530 100%);
+            color: white;
+            padding: 50px 0 20px;
+            margin-top: 70px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 22px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-section h3 i {
+            margin-right: 10px;
+            color: #a4bfef;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-links a i {
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 1px solid #3a4b5c;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .org-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .org-node {
+                margin-bottom: 20px;
+            }
+            
+            .org-connector {
+                width: 30px;
+                height: 2px;
+                margin: 0 auto 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .members-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室</div>
+                <ul class="nav-links">
+                    <li><a href="index.html"><i class="fas fa-home"></i>首页</a></li>
+                    <li><a href="news_paper.html"><i class="fas fa-newspaper"></i>新闻资讯</a></li>
+                    <li><a href="team.html" class="active"><i class="fas fa-sitemap"></i>团队架构</a></li>
+                    <li><a href="data.html"><i class="fas fa-database"></i>数据开放</a></li>
+                    <li><a href="join.html"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 页面标题 -->
+    <section class="page-header">
+        <div class="container">
+            <h1>团队架构</h1>
+            <ul class="breadcrumb">
+                <li><a href="index.html">首页</a></li>
+                <li>团队架构</li>
+            </ul>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- 团队结构图 -->
+        <section class="org-chart">
+            <h2><i class="fas fa-sitemap"></i>团队组织结构</h2>
+            <div class="chart-container">
+                <div class="org-row">
+                    <div class="org-node lead">
+                        <h3>决策团队</h3>
+                        <p>由3位创始人组成，制定决策确定未来发展走向</p>
+                    </div>
+                </div>
+                
+                <div class="org-connector"></div>
+                
+                <div class="org-row">
+
+                    <div class="org-node">
+                        <h3>核心推文团队</h3>
+                        <p>有着较为扎实的统计功底，承担Psych统计自习室主要推文撰写任务</p>
+                    </div>
+
+                    <div class="org-node">
+                        <h3>运营团队</h3>
+                        <p>承担Psych统计自习室在各大媒体平台的推送和统计相关服务联络工作</p>
+                    </div>
+                    
+                    <div class="org-node">
+                        <h3>青年团队</h3>
+                        <p>未来的统计团队考察对象，负责数据库建设与维护，发表SCI论文</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 团队统计 -->
+        <div class="team-stats">
+            <div class="stat-card">
+                <h3>团队成员</h3>
+                <div class="stat-number">19</div>
+                <p class="stat-desc">来自国内外知名高校和研究机构</p>
+            </div>
+            
+            <div class="stat-card">
+                <h3>硕士研究生</h3>
+                <div class="stat-number">8</div>
+                <p class="stat-desc">专注于心理学统计方法研究</p>
+            </div>
+            
+            <div class="stat-card">
+                <h3>博士研究生</h3>
+                <div class="stat-number">11</div>
+                <p class="stat-desc">在高级统计方法领域有深入研究</p>
+            </div>
+        </div>
+        
+        <!-- 核心成员 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-users"></i>团队负责人</h2>
+            <div class="members-container">
+                <!-- 王飞卡片 -->
+                <a href="member-wangfei.html" class="member-card">
+                    <div class="avatar-container">
+                         <img src="Fei-Wang-413.png" alt="王飞" class="member-avatar">
+                    </div>
+                    <div class="member-name">王飞</div>
+                    <div class="member-role">中国科学院心理研究所</div>
+                    <p>擅长统计：心理测量；网络分析；各类高级心理统计</p>
+                    <p>Psych统计自习室：摘星</p>
+                </a>
+                
+                <!-- 孟小暄卡片 -->
+                <a href="member-mxx.html" class="member-card">
+                    <div class="avatar-container">
+                         <img src="mxx.png" alt="孟小暄" class="member-avatar">
+                    </div>
+                    <div class="member-name">孟小暄</div>
+                    <div class="member-role">天津医科大学护理学院</div>
+                    <p>擅长统计：贝叶斯网络分析；预测模型</p>
+                    <p>Psych统计自习室：莲花清瘟</p>
+                </a>
+                
+                <!-- 武运筹卡片 -->
+                <a href="member-wuyunchou.html" class="member-card">
+                    <div class="avatar-container">
+                         <img src="wuyunchou.jpg" alt="武运筹" class="member-avatar">
+                    </div>
+                    <div class="member-name">武运筹</div>
+                    <div class="member-role">西南大学心理学部</div>
+                    <p>擅长统计：网络分析；量表简化技术</p>
+                    <p>Psych统计自习室：久久</p>
+                </a>
+            </div>
+        </section>
+        
+        <!-- 团队成员 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-user-graduate"></i>团队成员</h2>
+            <div class="members-container">
+                <!-- 成员1 -->
+                <div class="member-card">
+                    <div class="avatar-container">
+                         <img src="zhangwenrui.jpg" alt="张文睿" class="member-avatar">
+                    </div>
+                    <div class="member-name">张文睿</div>
+                    <div class="member-role">北京师范大学心理学部</div>
+                    <p>擅长统计：时序网络分析；面板网络分析</p>
+                    <p>Psych统计自习室：说鸽不鸽也是一种鸽</p>
+                </div>
+                
+                <!-- 成员2 -->
+                <div class="member-card">
+                    <div class="avatar-container">
+                        <img src="mimi.png" alt="成员2" class="member-avatar">
+                    </div>
+                    <div class="member-name">咕咕</div>
+                    <div class="member-role">北京师范大学</div>
+                    <p>擅长统计：潜变量建模；结构方程模型</p>
+                    <p>Psych统计自习室：咕咕</p>
+                </div>
+                
+                <!-- 成员3 -->
+                <div class="member-card">
+                    <div class="avatar-container">
+                        <img src="maxu.jpg" alt="马旭" class="member-avatar">
+                    </div>
+                    <div class="member-name">马旭</div>
+                    <div class="member-role">北京安定医院</div>
+                    <p>擅长统计：有调节网络分析；临床数据分析</p>
+                    <p>Psych统计自习室：Ns</p>
+                </div>
+                
+                <!-- 成员4 -->
+                <div class="member-card">
+                    <div class="avatar-container">
+                        <img src="mimi.png" alt="成员4" class="member-avatar">
+                    </div>
+                    <div class="member-name">厚朴大师</div>
+                    <div class="member-role">华南师范大学</div>
+                    <p>擅长统计：潜变量建模；结构方程模型</p>
+                    <p>Psych统计自习室：厚朴大师</p>
+                </div>
+                
+                <!-- 成员5 -->
+                <div class="member-card">
+                    <div class="avatar-container">
+                        <img src="liyuxin.jpg" alt="成员5" class="member-avatar">
+                    </div>
+                    <div class="member-name">李雨欣</div>
+                    <div class="member-role">南京大学</div>
+                    <p>擅长统计：项目反应理论；个人拟合；元分析</p>
+                    <p>Psych统计自习室：Travel</p>
+                </div>
+                
+                <!-- 成员6 -->
+                <div class="member-card">
+                    <div class="avatar-container">
+                        <img src="mimi.png" alt="成员6" class="member-avatar">
+                    </div>
+                    <div class="member-name">Lee</div>
+                    <div class="member-role">北京师范大学认知神经科学与学习国家重点实验室</div>
+                    <p>擅长统计：脑影像数据分析；MRI；PET</p>
+                    <p>Psych统计自习室：Lee</p>
+                </a>
+                </div>
+                
+                <!-- 成员7 -->
+<a href="member-bikaiwen.html" class="member-card">
+    <div class="avatar-container">
+        <img src="bikaiwen.jpg" alt="成员7" class="member-avatar">
+    </div>
+    <div class="member-name">毕楷文</div>
+    <div class="member-role">香港大学社会工作及社会行政学系</div>
+    <p>擅长统计: 纵向数据分析；潜变量分析；因果推断</p>
+    <p>Psych统计自习室：Kai</p>
+</a>
+
+<!-- 成员8 -->
+<a href="https://jamesjin63.github.io/" class="member-card" target="_blank">
+    <div class="avatar-container">
+        <img src="zhengjx.png" alt="郑金鑫" class="member-avatar">
+    </div>
+    <div class="member-name">郑金鑫</div>
+    <div class="member-role">上海交通大学全球健康学院</div>
+    <p>擅长统计：流行病学；机器学习</p>
+    <p>Psych统计自习室：Anderson</p>
+</a>
+
+<!-- 成员9 -->
+<a href="member-tangyy.html" class="member-card">
+    <div class="avatar-container">
+        <img src="tangyy.jpg" alt="成员9" class="member-avatar">
+    </div>
+    <div class="member-name">唐莹莹</div>
+    <div class="member-role">德克萨斯大学奥斯汀分校人类发展与家庭科学系</div>
+    <p>擅长统计：时序分析；潜变量分析</p>
+    <p>Psych统计自习室：VVagus</p>
+</a>
+                </div>
+        </section>
+        
+        <!-- 合作高校 -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-university"></i>合作高校与研究机构</h2>
+            <div class="org-chart" style="text-align: left;">
+                <p>Psych统计自习室团队成员来自以下知名高校和研究机构：</p>
+                <ul style="columns: 2; list-style-type: none; margin-top: 20px;">
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>中国科学院大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>北京师范大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>西南大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>天津医科大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>澳门大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>南京大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>华南师范大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>北京安定医院</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>上海交通大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>香港大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>华中科技大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>苏州大学</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>伦敦国王学院</li>
+                    <li style="margin-bottom: 10px;"><i class="fas fa-graduation-cap" style="color: #4a6fa5; margin-right: 10px;"></i>德克萨斯大学</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-envelope"></i>联系我们</h3>
+                    <p>邮箱: 3173363852@qq.com</p>
+                    <p>微信公众号: Psych统计自习室</p>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-handshake"></i>常见问题</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html#courses"><i class="fas fa-file-download"></i>资源申请</a></li>
+                        <li><a href="join-us.html"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                        <li><a href="https://www.wjx.cn/vm/mw7XyPO.aspx#"><i class="fas fa-handshake"></i>合作机会</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-link"></i>常用链接</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://www.cpsbeijing.org/"><i class="fas fa-university"></i>中国心理学会</a></li>
+                        <li><a href="https://journal.psych.ac.cn/xlxb/CN/0439-755X/home.shtml"><i class="fas fa-book"></i>心理学报</a></li>
+                        <li><a href="https://journal.psych.ac.cn/xlkxjz/CN/1671-3710/home.shtml"><i class="fas fa-book-open"></i>心理科学进展</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Psych统计自习室. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 动态更新年份
+            document.querySelector('.copyright p').innerHTML = `&copy; ${new Date().getFullYear()} Psych统计自习室. 保留所有权利.`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新闻资讯 - Psych统计自习室</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 基础样式设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #4a6fa5;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #2c4c75;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 30px;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+        }
+        
+        .nav-links a.active {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover:after, .nav-links a.active:after {
+            width: 100%;
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            font-size: 1.05rem;
+        }
+        
+        .breadcrumb li {
+            margin: 0 10px;
+        }
+        
+        .breadcrumb li:after {
+            content: '>';
+            margin-left: 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .breadcrumb li:last-child:after {
+            content: '';
+            margin: 0;
+        }
+        
+        .breadcrumb a {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+        }
+        
+        /* 新闻列表样式 */
+        .news-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .news-filters {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 25px;
+            height: fit-content;
+        }
+        
+        .news-filters h3 {
+            color: #2c4c75;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .news-filters h3 i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .filter-group {
+            margin-bottom: 25px;
+        }
+        
+        .filter-group h4 {
+            margin-bottom: 15px;
+            color: #4a6fa5;
+            font-size: 1.1rem;
+        }
+        
+        .filter-options {
+            list-style: none;
+        }
+        
+        .filter-options li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .filter-options input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .filter-options label {
+            cursor: pointer;
+        }
+        
+        .filter-btn {
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover {
+            background: #3a5a80;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .news-list {
+            flex: 3;
+            min-width: 300px;
+        }
+        
+        .news-item {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .news-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .news-journal {
+            color: #4a6fa5;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .news-title {
+            font-size: 1.4rem;
+            color: #2c4c75;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .news-content {
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .news-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .news-author, .news-date, .news-tags {
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #64748b;
+        }
+        
+        .news-author i, .news-date i, .news-tags i {
+            margin-right: 8px;
+            color: #4a6fa5;
+        }
+        
+        .news-tags span {
+            background: #eaeaea;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 8px;
+            color: #4a6fa5;
+        }
+        
+        .news-link {
+            display: inline-block;
+            color: #4a6fa5;
+            font-weight: 500;
+            padding: 8px 16px;
+            border: 1px solid #4a6fa5;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .news-link:hover {
+            background: #4a6fa5;
+            color: white;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            color: #64748b;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            color: #a4bfef;
+            margin-bottom: 20px;
+        }
+        
+        .no-results h3 {
+            color: #2c4c75;
+            margin-bottom: 15px;
+        }
+        
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            margin: 40px 0;
+        }
+        
+        .pagination li {
+            margin: 0 8px;
+        }
+        
+        .pagination a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            color: #4a6fa5;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination a:hover, .pagination a.active {
+            background: #4a6fa5;
+            color: white;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2530 100%);
+            color: white;
+            padding: 50px 0 20px;
+            margin-top: 70px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 22px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-section h3 i {
+            margin-right: 10px;
+            color: #a4bfef;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-links a i {
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 1px solid #3a4b5c;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .news-container {
+                flex-direction: column;
+            }
+            
+            .news-filters {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none; /* 简化移动端导航 */
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .news-title {
+                font-size: 1.2rem;
+            }
+            
+            .news-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室</div>
+                <ul class="nav-links">
+                    <li><a href="index.html"><i class="fas fa-home"></i>首页</a></li>
+                    <li><a href="news_paper.html" class="active"><i class="fas fa-newspaper"></i>新闻资讯</a></li>
+                    <li><a href="team.html"><i class="fas fa-sitemap"></i>团队架构</a></li>
+                    <li><a href="data.html"><i class="fas fa-database"></i>数据开放</a></li>
+                    <li><a href="join.html"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 页面标题 -->
+    <section class="page-header">
+        <div class="container">
+            <h1>新闻资讯</h1>
+            <ul class="breadcrumb">
+                <li><a href="index.html">首页</a></li>
+                <li>新闻资讯</li>
+            </ul>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="news-container">
+            <!-- 筛选侧边栏 -->
+            <aside class="news-filters">
+                <h3><i class="fas fa-filter"></i>筛选新闻</h3>
+                
+                <div class="filter-group">
+                    <h4>团队成员</h4>
+                    <ul class="filter-options">
+                        <li>
+                            <input type="checkbox" id="filter-author-1" checked data-author="摘星">
+                            <label for="filter-author-1">摘星</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-2" checked data-author="久久">
+                            <label for="filter-author-2">久久</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-3" checked data-author="莲花清瘟">
+                            <label for="filter-author-3">莲花清瘟</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-4" checked data-author="说鸽不鸽也是一种鸽">
+                            <label for="filter-author-4">说鸽不鸽也是一种鸽</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-5" checked data-author="Ns">
+                            <label for="filter-author-5">Ns</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-6" checked data-author="咕咕">
+                            <label for="filter-author-6">咕咕</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-7" checked data-author="厚朴大师">
+                            <label for="filter-author-7">厚朴大师</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-8" checked data-author="Travel">
+                            <label for="filter-author-8">Travel</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-9" checked data-author="Kai">
+                            <label for="filter-author-9">Kai</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-10" checked data-author="VVagus">
+                            <label for="filter-author-10">VVagus</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-author-11" checked data-author="Anderson">
+                            <label for="filter-author-11">Anderson</label>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="filter-group">
+                    <h4>期刊</h4>
+                    <ul class="filter-options">
+                        <li>
+                            <input type="checkbox" id="filter-journal-1" checked data-journal="Personality and Individual Differences">
+                            <label for="filter-journal-1">Personality and Individual Differences</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-journal-2" checked data-journal="Body Image">
+                            <label for="filter-journal-2">Body Image</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-journal-3" checked data-journal="Journal of Affective Disorders">
+                            <label for="filter-journal-3">Journal of Affective Disorders</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-journal-4" checked data-journal="Current Medical Research and Opinion">
+                            <label for="filter-journal-4">Current Medical Research and Opinion</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-journal-5" checked data-journal="BMC Public Health">
+                            <label for="filter-journal-5">BMC Public Health</label>
+                        </li>
+                        
+                    </ul>
+                </div>
+                
+                <div class="filter-group">
+                    <h4>年份</h4>
+                    <ul class="filter-options">
+                        <li>
+                            <input type="checkbox" id="filter-year-2025" checked data-year="2025">
+                            <label for="filter-year-2025">2025</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-year-2024" checked data-year="2024">
+                            <label for="filter-year-2024">2024</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-year-2023" checked data-year="2023">
+                            <label for="filter-year-2023">2023</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="filter-year-2022" data-year="2022">
+                            <label for="filter-year-2022">2022</label>
+                        </li>
+                    </ul>
+                </div>
+                
+                <button id="apply-filters" class="filter-btn">
+                    应用筛选
+                </button>
+                <button id="reset-filters" class="filter-btn" style="background: #64748b; margin-top: 10px;">
+                    重置筛选
+                </button>
+            </aside>
+            
+            <!-- 新闻列表 -->
+            <div class="news-list" id="news-list-container">
+                <!-- 新闻将通过JavaScript动态加载 -->
+            </div>
+        </div>
+        
+        <!-- 分页 -->
+        <ul class="pagination" id="pagination-container">
+            <!-- 分页将通过JavaScript动态生成 -->
+        </ul>
+    </main>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-envelope"></i>联系我们</h3>
+                    <p>邮箱: 3173363852@qq.com</p>
+                    <p>微信公众号: Psych统计自习室</p>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-handshake"></i>常见问题</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html#courses"><i class="fas fa-file-download"></i>资源申请</a></li>
+                        <li><a href="join-us.html"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                        <li><a href="https://www.wjx.cn/vm/mw7XyPO.aspx#"><i class="fas fa-handshake"></i>合作机会</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-link"></i>常用链接</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://www.cpsbeijing.org/"><i class="fas fa-university"></i>中国心理学会</a></li>
+                        <li><a href="https://journal.psych.ac.cn/xlxb/CN/0439-755X/home.shtml"><i class="fas fa-book"></i>心理学报</a></li>
+                        <li><a href="https://journal.psych.ac.cn/xlkxjz/CN/1671-3710/home.shtml"><i class="fas fa-book-open"></i>心理科学进展</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Psych统计自习室. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 新闻数据
+        const newsData = [
+            {
+                author: "摘星",
+                journal: "Personality and Individual Differences",
+                year: "2024",
+                date: "2024-09-02",
+                title: "团队成员摘星开发了休息羞耻量表",
+                content: "随着中国社会的发展，“休息羞耻”已成为备受关注和讨论的话题。本研究旨在探讨休息羞耻的维度与心理内涵，并编制适用于中国大学生群体的简版与长版休息羞耻量表。我们通过三个步骤完成量表开发：研究一首先采用访谈和扎根理论方法，提出休息羞耻的心理内涵及其四个特征维度（消极情绪、强迫性思考、社会比较和认知偏差），在此基础上编制休息羞耻初测量表，经过项目分析、探索性因子分析和探索性图分析，最终形成包含24个条目的四维度量表；研究二通过验证性因子分析、内容效度检验和效标效度检验在新样本中验证了休息羞耻的四维结构，结果表明24条目休息羞耻量表（RIS-24）具有良好的信效度；研究三采用遗传算法开发出8条目简版休息羞耻量表（RIS-8）。本研究为测量休息羞耻现象提供了两种有效工具，将有助于推动相关领域研究的深入开展。",
+                tags: ["休息羞耻", "负面感受", "社会比较", "强迫思考", "认知偏差"],
+                link: "https://doi.org/10.1016/j.paid.2024.112869"
+            },
+            {
+                author: "久久",
+                journal: "Body Image",
+                year: "2024",
+                date: "2024-12-22",
+                title: "团队成员久久对身体谈论量表进行了跨文化修订",
+                content: "《身体谈论量表》（Body Talk Scale, BTS）可用于测量不同性别个体的消极身体对话（包括胖负面身体对话与肌肉负面身体对话）及积极身体对话。本研究对该量表进行汉化，并在中国内地居民中检验其结构、信度和效度。项目分析表明无需删减条目，探索性因子分析（n=1853）与探索性图分析（n=1583）均支持量表保留原量表的三因子结构。验证性因子分析显示模型拟合良好（CFI=0.95, GFI=0.93, TLI=0.94, RMSEA=0.079，90%CI[0.075,0.084]）。效标关联效度、内部一致性信度及六周重测信度结果均达到心理测量学要求。同时，量表在不同性别群体中具有测量等值性，可用于性别差异的检验。结果表明中文版BTS在中国样本中具有良好的心理测量学特性，是研究中国人群身体对话与健康状况的有效工具。",
+                tags: ["跨文化研究", "身体谈论", "量表修订"],
+                link: "https://doi.org/10.1016/j.bodyim.2024.101766"
+            },
+            {
+                author: "摘星",
+                journal: "Journal of Affective Disorders",
+                year: "2024",
+                date: "2024-08-23",
+                title: "团队成员摘星揭示造成成年后焦虑最严重的早期不良经历是被父母辱骂",
+                content: "引言：何种不良童年经历与成年期焦虑存在因果关联尚不明确。敏感期模型指出，早期不良经历可影响成年期焦虑水平。然而，何种不良经历是成年期焦虑最重要的早期不良因素，以及早期缓解或加重该不良经历是否可预测成年期焦虑水平的下降或上升，仍有待探究。方法：于2023年6月20日至8月31日开展全国性横断面调查，共招募30,054名18岁及以上成年人完成不良童年经历量表和广泛性焦虑障碍量表问卷调查。采用网络分析与计算机模拟技术，通过模拟加重性和缓解性干预观察焦虑水平变化，以识别与成年期焦虑水平存在因果关联的早期不良经历。结果：网络分析与节点识别算法（NIRA）结果均表明，在不良童年经历-焦虑网络（ACE-GAD网络）中，童年期遭受父母咒骂侮辱（CUR）是导致成年期焦虑最为严重的早期不良经历。特别在青中年群体中，针对CUR的模拟加重性干预会导致成年期焦虑水平显著升高。结论：预防童年期言语咒骂或侮辱可作为未来焦虑干预的早期预防措施。本研究具有重要理论与实践意义，为焦虑的早期预防和家庭教育提供了新视角。",
+                tags: ["童年不良经历", "焦虑", "网络分析"],
+                link: "https://doi.org/10.1016/j.jad.2024.08.157"
+            },
+            {
+                author: "莲花清瘟",
+                journal: "Current Medical Research and Opinion",
+                year: "2023",
+                date: "2023-08-08",
+                title: "团队成员莲花清瘟探讨了新型慢性病患者通用药物依从性量表的心理测量学特性",
+                content: "目的：目前虽已开发出多种药物依从性相关量表并应用于临床，但其心理测量学特性仍需进一步验证。本研究采用Rasch分析对通用药物依从性量表（GMAS）进行效度验证，并为量表优化提供针对性建议。方法：采用横断面研究设计，使用二次数据分析。于2020年1月至6月期间，从天津市两家三级医院和一家社区卫生服务中心招募312名成年慢性病患者完成包含GMAS的问卷调查。纳入标准为：至少患有一种慢性病且持续服药超过3个月；排除标准为：罹患心衰、癌症等危及生命的重大疾病、存在认知障碍或明显沟通困难者。采用Rasch模型分析量表的单维性、效度、信度、项目功能差异及模型拟合度等心理测量学特性。结果：首次拟合Rasch模型后删除56例模型拟合不佳的样本，最终256例样本进入分析。结果显示GMAS能较好拟合Rasch模型，证明量表具有良好的心理测量学特性。但部分条目在是否患合并症群体间存在项目功能差异。结论：GMAS可作为筛查患者药物依从性问题的有效工具，但仍需针对存在的问题进一步优化量表。",
+                tags: ["Rasch分析", "慢性病", "药物依从性"],
+                link: "https://doi.org/10.1080/03007995.2023.2196219"
+            },
+            {
+                author: "久久",
+                journal: "BMC Public Health",
+                year: "2025",
+                date: "2025-01-20",
+                title: "团队成员久久开发了简短版本的社会支持量表",
+                content: "背景 尽管感知社会支持量表（PSSS-12）项目数相对较少，但为最大限度缩短测试时间，量表简化已成为趋势。基于美国军人配偶受访数据，已有研究者将PSSS-12简化为PSSS-M6。本研究旨在开发适用于中国普通人群的PSSS-12简版。方法：采用多阶段分层整群抽样方法，收集全国120个城市10,914名居民数据。将数据随机分为两部分后，分别进行探索性分析与验证性分析。在数据集1的探索性分析中，分别基于经典测量理论（CTT）和蚁群优化算法（ACO）进行量表简化，各获得一个简版量表；同时引入先前研究中基于多维项目反应理论开发的多维感知社会支持量表（MSPSS）其他简版，共获得三个简版量表。检验了三类简版量表的信度与区分效度，进而使用数据集2检验两个MSPSS简版量表的信效度、模型拟合度及测量等值性。结果：基于ACO开发的6项目简版量表（PSSS-A6）在所有简版中表现出最佳心理测量学特性。此外，由各维度因子载荷最高项目组成的3项目简版同样展现出良好的心理测量学特性。结论：未来研究中若需采用MSPSS简版量表进行测量，3项目简版适用于临床场景、大规模横断面研究或纵向研究，而PSSS-A6更适用于需要更高精确度的测量情境。",
+                tags: ["社会支持", "蚁群算法", "量表开发"],
+                link: "https://doi.org/10.1186/s12889-025-21399-y"
+            },
+            
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 动态更新年份
+            document.querySelector('.copyright p').innerHTML = `&copy; ${new Date().getFullYear()} Psych统计自习室. 保留所有权利.`;
+            
+            // 按日期排序新闻（最新的在前）
+            newsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // 分页相关变量
+            let currentPage = 1;
+            const itemsPerPage = 10; // 每页显示5条新闻（为了演示效果，实际可改为10）
+            
+            // 初始化页面
+            renderNewsItems();
+            setupPagination();
+            setupFilters();
+            
+            function renderNewsItems() {
+                const newsListContainer = document.getElementById('news-list-container');
+                newsListContainer.innerHTML = '';
+                
+                // 获取当前页应显示的新闻
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = newsData.slice(startIndex, endIndex);
+                
+                if (paginatedItems.length === 0) {
+                    newsListContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>没有找到匹配的新闻</h3>
+                            <p>请尝试调整筛选条件</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 渲染新闻项
+                paginatedItems.forEach(item => {
+                    const newsItem = document.createElement('article');
+                    newsItem.className = 'news-item';
+                    newsItem.dataset.author = item.author;
+                    newsItem.dataset.journal = item.journal;
+                    newsItem.dataset.year = item.year;
+                    
+                    // 创建标签HTML
+                    const tagsHTML = item.tags.map(tag => `<span>${tag}</span>`).join('');
+                    
+                    newsItem.innerHTML = `
+                        <div class="news-journal">${item.journal}</div>
+                        <h2 class="news-title">${item.title}</h2>
+                        <p class="news-content">${item.content}</p>
+                        <div class="news-meta">
+                            <div class="news-author">
+                                <i class="fas fa-user"></i> ${item.author}
+                            </div>
+                            <div class="news-date">
+                                <i class="far fa-calendar"></i> ${item.date}
+                            </div>
+                            <div class="news-tags">
+                                <i class="fas fa-tags"></i>
+                                ${tagsHTML}
+                            </div>
+                        </div>
+                        <a href="${item.link}" class="news-link">阅读全文 <i class="fas fa-arrow-right"></i></a>
+                    `;
+                    
+                    newsListContainer.appendChild(newsItem);
+                });
+            }
+            
+            function setupPagination() {
+                const paginationContainer = document.getElementById('pagination-container');
+                paginationContainer.innerHTML = '';
+                
+                const pageCount = Math.ceil(newsData.length / itemsPerPage);
+                
+                // 添加上一页按钮
+                if (pageCount > 1) {
+                    const prevLi = document.createElement('li');
+                    prevLi.innerHTML = `<a href="#" id="prev-page"><i class="fas fa-angle-left"></i></a>`;
+                    paginationContainer.appendChild(prevLi);
+                    
+                    document.getElementById('prev-page').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (currentPage > 1) {
+                            currentPage--;
+                            renderNewsItems();
+                            updatePagination();
+                        }
+                    });
+                }
+                
+                // 添加页码按钮
+                for (let i = 1; i <= pageCount; i++) {
+                    const pageLi = document.createElement('li');
+                    pageLi.innerHTML = `<a href="#" class="page-link ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</a>`;
+                    paginationContainer.appendChild(pageLi);
+                    
+                    pageLi.querySelector('.page-link').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = parseInt(this.dataset.page);
+                        renderNewsItems();
+                        updatePagination();
+                    });
+                }
+                
+                // 添加下一页按钮
+                if (pageCount > 1) {
+                    const nextLi = document.createElement('li');
+                    nextLi.innerHTML = `<a href="#" id="next-page"><i class="fas fa-angle-right"></i></a>`;
+                    paginationContainer.appendChild(nextLi);
+                    
+                    document.getElementById('next-page').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (currentPage < pageCount) {
+                            currentPage++;
+                            renderNewsItems();
+                            updatePagination();
+                        }
+                    });
+                }
+            }
+            
+            function updatePagination() {
+                const pageLinks = document.querySelectorAll('.page-link');
+                pageLinks.forEach(link => {
+                    if (parseInt(link.dataset.page) === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+            }
+            
+            function setupFilters() {
+                // 应用筛选功能
+                document.getElementById('apply-filters').addEventListener('click', function() {
+                    // 获取选中的筛选条件
+                    const selectedAuthors = Array.from(document.querySelectorAll('input[data-author]:checked')).map(input => input.dataset.author);
+                    const selectedJournals = Array.from(document.querySelectorAll('input[data-journal]:checked')).map(input => input.dataset.journal);
+                    const selectedYears = Array.from(document.querySelectorAll('input[data-year]:checked')).map(input => input.dataset.year);
+                    
+                    // 筛选新闻数据
+                    const filteredNews = newsData.filter(item => {
+                        const authorMatch = selectedAuthors.length === 0 || selectedAuthors.includes(item.author);
+                        const journalMatch = selectedJournals.length === 0 || selectedJournals.includes(item.journal);
+                        const yearMatch = selectedYears.length === 0 || selectedYears.includes(item.year);
+                        
+                        return authorMatch && journalMatch && yearMatch;
+                    });
+                    
+                    // 更新分页
+                    currentPage = 1;
+                    renderFilteredNews(filteredNews);
+                });
+                
+                // 重置筛选功能
+                document.getElementById('reset-filters').addEventListener('click', function() {
+                    // 重置所有复选框为选中状态
+                    document.querySelectorAll('input[type="checkbox"]').forEach(input => {
+                        input.checked = true;
+                    });
+                    
+                    // 显示所有新闻
+                    currentPage = 1;
+                    renderFilteredNews(newsData);
+                });
+            }
+            
+            function renderFilteredNews(filteredNews) {
+                // 重新渲染新闻项和分页
+                const pageCount = Math.ceil(filteredNews.length / itemsPerPage);
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = filteredNews.slice(startIndex, endIndex);
+                
+                const newsListContainer = document.getElementById('news-list-container');
+                newsListContainer.innerHTML = '';
+                
+                if (paginatedItems.length === 0) {
+                    newsListContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>没有找到匹配的新闻</h3>
+                            <p>请尝试调整筛选条件</p>
+                        </div>
+                    `;
+                } else {
+                    paginatedItems.forEach(item => {
+                        const newsItem = document.createElement('article');
+                        newsItem.className = 'news-item';
+                        newsItem.dataset.author = item.author;
+                        newsItem.dataset.journal = item.journal;
+                        newsItem.dataset.year = item.year;
+                        
+                        const tagsHTML = item.tags.map(tag => `<span>${tag}</span>`).join('');
+                        
+                        newsItem.innerHTML = `
+                            <div class="news-journal">${item.journal}</div>
+                            <h2 class="news-title">${item.title}</h2>
+                            <p class="news-content">${item.content}</p>
+                            <div class="news-meta">
+                                <div class="news-author">
+                                    <i class="fas fa-user"></i> ${item.author}
+                                </div>
+                                <div class="news-date">
+                                    <i class="far fa-calendar"></i> ${item.date}
+                                </div>
+                                <div class="news-tags">
+                                    <i class="fas fa-tags"></i>
+                                    ${tagsHTML}
+                                </div>
+                            </div>
+                            <a href="${item.link}" class="news-link">阅读全文 <i class="fas fa-arrow-right"></i></a>
+                        `;
+                        
+                        newsListContainer.appendChild(newsItem);
+                    });
+                }
+                
+                // 更新分页
+                setupPaginationForFilteredNews(filteredNews);
+            }
+            
+            function setupPaginationForFilteredNews(filteredNews) {
+                const paginationContainer = document.getElementById('pagination-container');
+                paginationContainer.innerHTML = '';
+                
+                const pageCount = Math.ceil(filteredNews.length / itemsPerPage);
+                
+                // 添加上一页按钮
+                if (pageCount > 1) {
+                    const prevLi = document.createElement('li');
+                    prevLi.innerHTML = `<a href="#" id="prev-page"><i class="fas fa-angle-left"></i></a>`;
+                    paginationContainer.appendChild(prevLi);
+                    
+                    document.getElementById('prev-page').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (currentPage > 1) {
+                            currentPage--;
+                            renderFilteredNews(filteredNews);
+                        }
+                    });
+                }
+                
+                // 添加页码按钮
+                for (let i = 1; i <= pageCount; i++) {
+                    const pageLi = document.createElement('li');
+                    pageLi.innerHTML = `<a href="#" class="page-link ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</a>`;
+                    paginationContainer.appendChild(pageLi);
+                    
+                    pageLi.querySelector('.page-link').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = parseInt(this.dataset.page);
+                        renderFilteredNews(filteredNews);
+                    });
+                }
+                
+                // 添加下一页按钮
+                if (pageCount > 1) {
+                    const nextLi = document.createElement('li');
+                    nextLi.innerHTML = `<a href="#" id="next-page"><i class="fas fa-angle-right"></i></a>`;
+                    paginationContainer.appendChild(nextLi);
+                    
+                    document.getElementById('next-page').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (currentPage < pageCount) {
+                            currentPage++;
+                            renderFilteredNews(filteredNews);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

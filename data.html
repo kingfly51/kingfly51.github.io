@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据开放 - Psych统计自习室</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #4a6fa5;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #2c4c75;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 30px;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+        }
+        
+        .nav-links a.active {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover:after, .nav-links a.active:after {
+            width: 100%;
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            font-size: 1.05rem;
+        }
+        
+        .breadcrumb li {
+            margin: 0 10px;
+        }
+        
+        .breadcrumb li:after {
+            content: '>';
+            margin-left: 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .breadcrumb li:last-child:after {
+            content: '';
+            margin: 0;
+        }
+        
+        .breadcrumb a {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+        }
+        
+        /* 数据资源卡片 */
+        .data-resources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .data-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .data-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            color: white;
+            font-size: 1.8rem;
+        }
+        
+        .data-title {
+            font-size: 1.6rem;
+            color: #2c4c75;
+            margin-bottom: 5px;
+        }
+        
+        .data-subtitle {
+            color: #64748b;
+            font-size: 1rem;
+        }
+        
+        .data-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-item {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+        }
+        
+        .data-description {
+            color: #64748b;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .data-features {
+            margin-bottom: 25px;
+        }
+        
+        .feature-title {
+            color: #2c4c75;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-title i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .feature-list {
+            list-style: none;
+            margin-left: 10px;
+        }
+        
+        .feature-list li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            color: #64748b;
+        }
+        
+        .feature-list li:before {
+            content: '•';
+            color: #4a6fa5;
+            font-weight: bold;
+            position: absolute;
+            left: 10px;
+        }
+        
+        .data-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #4a6fa5;
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: #3a5a80;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #4a6fa5;
+            border: 2px solid #4a6fa5;
+        }
+        
+        .btn-outline:hover {
+            background: #4a6fa5;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        /* 数据申请流程 */
+        .application-process {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            padding: 35px;
+            margin-bottom: 50px;
+        }
+        
+        .section-title {
+            color: #2c4c75;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .process-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 40px 0;
+        }
+        
+        .process-steps:before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #eaeaea;
+            z-index: 1;
+        }
+        
+        .step {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .step-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .step-number {
+            position: absolute;
+            top: -10px;
+            right: -5px;
+            background: #f8fafc;
+            border: 2px solid #4a6fa5;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+        
+        .step-title {
+            color: #2c4c75;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .step-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            padding: 0 10px;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2530 100%);
+            color: white;
+            padding: 50px 0 20px;
+            margin-top: 70px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 22px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-section h3 i {
+            margin-right: 10px;
+            color: #a4bfef;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-links a i {
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 1px solid #3a4b5c;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1100px) {
+            .data-resources {
+                grid-template-columns: 1fr;
+            }
+            
+            .process-steps {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .process-steps:before {
+                display: none;
+            }
+            
+            .step {
+                display: flex;
+                align-items: flex-start;
+                text-align: left;
+            }
+            
+            .step-icon {
+                margin: 0 20px 0 0;
+                flex-shrink: 0;
+            }
+            
+            .step-content {
+                flex: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .data-card-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .data-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
+            .data-stats {
+                justify-content: center;
+            }
+            
+            .data-actions {
+                flex-direction: column;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 35px;
+            }
+            
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .step-icon {
+                margin: 0 auto 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室</div>
+                <ul class="nav-links">
+                    <li><a href="index.html"><i class="fas fa-home"></i>首页</a></li>
+                    <li><a href="news_paper.html"><i class="fas fa-newspaper"></i>新闻资讯</a></li>
+                    <li><a href="team.html"><i class="fas fa-sitemap"></i>团队架构</a></li>
+                    <li><a href="data.html" class="active"><i class="fas fa-database"></i>数据开放</a></li>
+                    <li><a href="join.html"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 页面标题 -->
+    <section class="page-header">
+        <div class="container">
+            <h1>数据开放</h1>
+            <ul class="breadcrumb">
+                <li><a href="index.html">首页</a></li>
+                <li>数据开放</li>
+            </ul>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- 数据资源介绍 -->
+        <div class="data-resources">
+            <!-- 睡眠密集追踪数据 -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="data-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div>
+                        <h2 class="data-title">大学生睡眠密集追踪调查</h2>
+                        <p class="data-subtitle">14天日记法研究 · 多维度睡眠数据</p>
+                    </div>
+                </div>
+                
+                <div class="data-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">14</span>
+                        <span class="stat-label">追踪天数</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">200+</span>
+                        <span class="stat-label">参与者</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">40+</span>
+                        <span class="stat-label">测量变量</span>
+                    </div>
+                </div>
+                
+                <div class="data-description">
+                    <p>本研究采用密集追踪设计，对大学生睡眠模式进行为期14天的全方位监测。包含前测、后测以及每日晨测和晚测问卷，同时收集手环生理数据和手机使用数据。</p>
+                </div>
+                
+                <div class="data-features">
+                    <h3 class="feature-title"><i class="fas fa-list"></i>主要测量构念</h3>
+                    <ul class="feature-list">
+                        <li>睡眠质量 (PSQI)</li>
+                        <li>失眠症状 (ISI-ESS)</li>
+                        <li>睡眠规律性 (SRQ)</li>
+                        <li>心理健康指标 (抑郁、焦虑、压力、休息羞耻等)</li>
+                        <li>环境因素 (噪音、光照、温度等)</li>
+                        <li>日常行为 (久坐、饮食、运动等)</li>
+                        <li>生理数据 (手环监测)</li>
+                        <li>上述仅列出了其中一部分变量</li>
+                    </ul>
+                </div>
+                
+                <div class="data-actions">
+                    <a href="#" class="btn btn-primary"><i class="fas fa-download"></i>申请数据</a>
+                    <a href="#" class="btn btn-outline"><i class="fas fa-file-pdf"></i>查看文档</a>
+                </div>
+            </div>
+            
+            <!-- 社交媒体使用数据 -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="data-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div>
+                        <h2 class="data-title">社交媒体使用纵向调查</h2>
+                        <p class="data-subtitle">三次追踪 · 社交媒体行为研究</p>
+                    </div>
+                </div>
+                
+                <div class="data-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">追踪时点</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">1000+</span>
+                        <span class="stat-label">参与者</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">30+</span>
+                        <span class="stat-label">测量变量</span>
+                    </div>
+                </div>
+                
+                <div class="data-description">
+                    <p>本研究采用纵向设计，间隔一个月进行三次追踪调查，全面评估大学生社交媒体使用模式及其与心理健康的关系。包含问卷数据和手机APP使用数据。</p>
+                </div>
+                
+                <div class="data-features">
+                    <h3 class="feature-title"><i class="fas fa-list"></i>主要测量构念</h3>
+                    <ul class="feature-list">
+                        <li>社交媒体成瘾 (BSMAS)</li>
+                        <li>智能手机成瘾 (MPAI)</li>
+                        <li>短视频成瘾</li>
+                        <li>错失恐惧</li>
+                        <li>休息羞耻</li>
+                        <li>社会支持 (PSSS)</li>
+                        <li>正念水平</li>
+                        <li>手机使用客观数据</li>
+                        <li>上述仅列出了其中一部分变量</li>
+                    </ul>
+                </div>
+                
+                <div class="data-actions">
+                    <a href="#" class="btn btn-primary"><i class="fas fa-download"></i>申请数据</a>
+                    <a href="#" class="btn btn-outline"><i class="fas fa-file-pdf"></i>查看文档</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据申请流程 -->
+        <div class="application-process">
+            <h2 class="section-title"><i class="fas fa-clipboard-list"></i>数据申请流程</h2>
+            
+            <div class="process-steps">
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-file-alt"></i>
+                        <div class="step-number">1</div>
+                    </div>
+                    <div class="step-content">
+                        <h3 class="step-title">提交申请</h3>
+                        <p class="step-desc">填写数据申请表，说明研究目的、数据使用计划和伦理审批情况</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="step-number">2</div>
+                    </div>
+                    <div class="step-content">
+                        <h3 class="step-title">审核评估</h3>
+                        <p class="step-desc">团队审核申请，评估研究方案的合理性和可行性</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-handshake"></i>
+                        <div class="step-number">3</div>
+                    </div>
+                    <div class="step-content">
+                        <h3 class="step-title">签署协议</h3>
+                        <p class="step-desc">签署数据使用协议，明确数据使用范围和保密义务</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-database"></i>
+                        <div class="step-number">4</div>
+                    </div>
+                    <div class="step-content">
+                        <h3 class="step-title">获取数据</h3>
+                        <p class="step-desc">获得数据访问权限，开始您的研究工作</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-actions" style="justify-content: center;">
+                <a href="#" class="btn btn-primary"><i class="fas fa-file-download"></i>下载申请表格</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-envelope"></i>联系我们</h3>
+                    <p>邮箱: 3173363852@qq.com</p>
+                    <p>微信公众号: Psych统计自习室</p>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-handshake"></i>常见问题</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html#courses"><i class="fas fa-file-download"></i>资源申请</a></li>
+                        <li><a href="join-us.html"><i class="fas fa-user-plus"></i>加入我们</a></li>
+                        <li><a href="https://www.wjx.cn/vm/mw7XyPO.aspx#"><i class="fas fa-handshake"></i>合作机会</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3><i class="fas fa-link"></i>常用链接</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://www.cpsbeijing.org/"><i class="fas fa-university"></i>中国心理学会</a></li>
+                        <li><a href="https://journal.psych.ac.cn/xlxb/CN/0439-755X/home.shtml"><i class="fas fa-book"></i>心理学报</a></li>
+                        <li><a href="https://journal.psych.ac.cn/xlkxjz/CN/1671-3710/home.shtml"><i class="fas fa-book-open"></i>心理科学进展</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Psych统计自习室. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 动态更新年份
+            document.querySelector('.copyright p').innerHTML = `&copy; ${new Date().getFullYear()} Psych统计自习室. 保留所有权利.`;
+        });
+    </script>
+</body>
+</html>
