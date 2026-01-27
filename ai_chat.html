@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI 心理疏导 - Psych统计自习室</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* 与主站相近的基础样式（精简并针对聊天组件） */
+    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    body { background: #f8fafc; color: #334155; line-height:1.6; padding-bottom:40px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    header { background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%); padding: 14px 0; color:#fff; margin-bottom:18px; border-radius:8px; }
+    .logo { display:flex; align-items:center; gap:10px; padding:0 20px; font-weight:700; font-size:22px; }
+    .logo i { font-size:26px; }
+
+    .chat-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+      padding: 22px;
+    }
+
+    .section-title { color:#2c4c75; font-size:1.5rem; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+    .section-desc { color:#64748b; margin-bottom:18px; }
+
+    /* 聊天区布局 */
+    .chat-wrapper { display:flex; gap:20px; flex-direction:column; }
+    .chat-box {
+      background: #f7f9fc;
+      border-radius: 10px;
+      padding: 16px;
+      height: 520px;
+      overflow-y: auto;
+      border: 1px solid #e6edf6;
+    }
+
+    .message { max-width:85%; padding: 12px 14px; border-radius: 12px; margin-bottom:12px; line-height:1.4; }
+    .message.user { background: linear-gradient(90deg,#e6f0ff,#dfeeff); color:#0f172a; margin-left:auto; text-align:right; }
+    .message.assistant { background: white; color:#0f172a; border:1px solid #e8eef9; }
+    .meta { font-size:0.82rem; color:#94a3b8; margin-bottom:6px; }
+
+    .controls { display:flex; gap:12px; align-items:flex-end; margin-top:12px; }
+    textarea#userInput { flex:1; min-height:70px; max-height:160px; padding:12px; border-radius:8px; border:1px solid #e6edf6; resize:vertical; background:white; font-size:0.95rem; }
+    button.btn { background: linear-gradient(90deg,#4a6fa5,#2c4c75); color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    button.btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+    .small { font-size:0.9rem; color:#64748b; }
+    .consent { display:flex; gap:10px; align-items:center; margin-top:10px; }
+    .note { margin-top:12px; font-size:0.9rem; color:#334155; background:#fff3; padding:10px; border-radius:8px; }
+
+    .top-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+    .btn-outline { background:transparent; border:1px solid #4a6fa5; color:#2c4c75; padding:8px 12px; border-radius:8px; cursor:pointer; }
+
+    .footer-note { margin-top:14px; font-size:0.9rem; color:#64748b; }
+
+    @media (max-width:700px) {
+      .chat-box { height:420px; }
+      textarea#userInput { min-height:60px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室 — AI 心理疏导</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="chat-section" aria-labelledby="ai-chat-title">
+      <div class="top-actions">
+        <div>
+          <h2 id="ai-chat-title" class="section-title"><i class="fas fa-comment-medical"></i> AI 心理疏导（认知重构辅助）</h2>
+          <div class="section-desc">该模块使用 AI 辅助你完成“认知重构五步法”。请注意：AI 不是心理健康的替代，若有严重困扰请寻求专业帮助。</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="clearBtn" class="btn-outline" title="清空对话">清空</button>
+          <button id="downloadBtn" class="btn-outline" title="下载对话（JSON）">下载对话</button>
+        </div>
+      </div>
+
+      <div class="chat-wrapper">
+        <div class="chat-box" id="chatBox" role="log" aria-live="polite"></div>
+
+        <div class="consent small">
+          <input type="checkbox" id="consentCheckbox" />
+          <label for="consentCheckbox">我同意将我的对话（匿名化）用于服务改进和记录（可撤回）。</label>
+        </div>
+        <div class="note small">会话将会以匿名会话 ID 存储（本地会话 ID 默认为随机生成），请勿输入极其敏感的个人信息（如身份证号、银行卡等）。</div>
+
+        <div class="controls">
+          <textarea id="userInput" placeholder="你最近有没有遇到一件让你感到困扰的事情？可以简单描述一下吗？（AI 会基于认知重构五步法逐步引导）"></textarea>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button id="sendBtn" class="btn">发送</button>
+            <button id="helpBtn" class="btn-outline" title="示例/引导">示例</button>
+          </div>
+        </div>
+
+        <div class="footer-note">
+          <strong>免责声明：</strong> 本系统提供基于模型的认知重构引导，不替代临床咨询。如情绪严重影响日常或存在自伤/自杀风险，请立即联系专业机构或就近急诊。
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 前端脚本：与后端 /api/chat 交互，不包含任何 API Key
+    (function() {
+      const chatBox = document.getElementById('chatBox');
+      const sendBtn = document.getElementById('sendBtn');
+      const userInput = document.getElementById('userInput');
+      const consentCheckbox = document.getElementById('consentCheckbox');
+      const clearBtn = document.getElementById('clearBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const helpBtn = document.getElementById('helpBtn');
+
+      // 使用本地存储保存 sessionId 和 对话记录（前端副本）
+      let sessionId = localStorage.getItem('psyc_session_id');
+      if (!sessionId) {
+        sessionId = 'sid-' + Math.random().toString(36).slice(2,12);
+        localStorage.setItem('psyc_session_id', sessionId);
+      }
+
+      let messages = []; // {role, text, ts}
+
+      function appendMessage(role, text) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = (role === 'user' ? '你' : 'AI 引导') + ' · ' + new Date().toLocaleString();
+        const content = document.createElement('div');
+        content.innerHTML = text.replace(/\n/g,'<br>');
+        wrapper.appendChild(meta);
+        wrapper.appendChild(content);
+        chatBox.appendChild(wrapper);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function setLoading(loading) {
+        sendBtn.disabled = loading;
+        userInput.disabled = loading;
+        if (loading) sendBtn.textContent = '思考中...';
+        else sendBtn.textContent = '发送';
+      }
+
+      async function sendMessage(text) {
+        if (!text || !text.trim()) return;
+        if (!consentCheckbox.checked) {
+          alert('请先勾选同意记录以继续（我们会对对话进行匿名记录，用于改进服务）。');
+          return;
+        }
+
+        appendMessage('user', text);
+        messages.push({role:'user', text, ts: Date.now()});
+        userInput.value = '';
+        setLoading(true);
+
+        try {
+          const resp = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+              sessionId,
+              message: text
+            })
+          });
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            appendMessage('assistant', '抱歉，服务暂不可用：' + errText);
+            setLoading(false);
+            return;
+          }
+
+          const data = await resp.json();
+          const assistantText = data.reply || '[未返回内容]';
+          appendMessage('assistant', assistantText);
+          messages.push({role:'assistant', text: assistantText, ts: Date.now()});
+        } catch (e) {
+          console.error(e);
+          appendMessage('assistant', '发生错误，请稍后再试。');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      sendBtn.addEventListener('click', () => {
+        sendMessage(userInput.value);
+      });
+
+      userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          sendMessage(userInput.value);
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        if (confirm('确认清空本次会话记录（前端显示）？服务器记录不会被删除，请在后台处理。')) {
+          chatBox.innerHTML = '';
+          messages = [];
+        }
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        const payload = {sessionId, messages, exportedAt: new Date().toISOString()};
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chat_${sessionId}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      helpBtn.addEventListener('click', () => {
+        const example = "最近一次课堂展示时我讲错了步骤，之后一直担心别人怎么看我，感觉很羞愧并害怕下次再出错。";
+        userInput.value = example;
+      });
+
+    })();
+  </script>
+</body>
+</html>
