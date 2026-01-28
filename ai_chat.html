@@ -6,92 +6,107 @@
   <title>AI 心理疏导 - Psych统计自习室</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* 与主站相近的基础样式（精简并针对聊天组件） */
+    /* 精简且针对聊天组件的视觉优化（兼顾移动端） */
     * { box-sizing: border-box; margin:0; padding:0; font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-    body { background: #f8fafc; color: #334155; line-height:1.6; padding-bottom:40px; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-    header { background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%); padding: 14px 0; color:#fff; margin-bottom:18px; border-radius:8px; }
-    .logo { display:flex; align-items:center; gap:10px; padding:0 20px; font-weight:700; font-size:22px; }
-    .logo i { font-size:26px; }
+    html,body { height:100%; }
+    body { background: #f3f6fb; color: #1f2937; line-height:1.6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    .container { max-width: 920px; margin: 18px auto; padding: 16px; display:flex; flex-direction:column; gap:14px; min-height:calc(100vh - 36px); }
+
+    header { background: linear-gradient(135deg, #4a6fa5 0%, #2c4c75 100%); padding: 14px 16px; color:#fff; border-radius:10px; box-shadow: 0 6px 18px rgba(44,76,117,0.12); }
+    .logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+    .logo i { font-size:22px; }
 
     .chat-section {
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.06);
-      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(20,40,60,0.06);
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      flex:1;
+      min-height:420px;
+      overflow:hidden;
     }
 
-    .section-title { color:#2c4c75; font-size:1.5rem; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
-    .section-desc { color:#64748b; margin-bottom:18px; }
+    .section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:6px 4px 12px 4px; }
+    .section-title { color:#123458; font-size:1.1rem; display:flex; align-items:center; gap:10px; }
+    .section-desc { color:#566777; font-size:0.9rem; margin-top:6px; }
 
-    /* 聊天区布局 */
-    .chat-wrapper { display:flex; gap:20px; flex-direction:column; }
+    .chat-area { display:flex; flex-direction:column; flex:1; gap:12px; min-height:200px; }
     .chat-box {
-      background: #f7f9fc;
-      border-radius: 10px;
-      padding: 16px;
-      height: 520px;
+      background: #f7fbff;
+      border-radius: 12px;
+      padding: 14px;
+      flex:1;
       overflow-y: auto;
-      border: 1px solid #e6edf6;
+      border: 1px solid #e6f0fa;
+      scroll-behavior:smooth;
+      transition: all .18s ease;
     }
 
-    .message { max-width:85%; padding: 12px 14px; border-radius: 12px; margin-bottom:12px; line-height:1.4; word-break:break-word; }
-    .message.user { background: linear-gradient(90deg,#e6f0ff,#dfeeff); color:#0f172a; margin-left:auto; text-align:right; }
-    .message.assistant { background: white; color:#0f172a; border:1px solid #e8eef9; }
-    .meta { font-size:0.82rem; color:#94a3b8; margin-bottom:6px; }
+    .message { max-width:84%; padding: 12px 14px; border-radius: 14px; margin-bottom:12px; line-height:1.45; word-break:break-word; box-shadow: 0 2px 6px rgba(20,40,60,0.04); opacity:0; transform: translateY(6px); animation: fadeUp .18s forwards; }
+    @keyframes fadeUp { to { opacity:1; transform: translateY(0); } }
 
-    .controls { display:flex; gap:12px; align-items:flex-end; margin-top:12px; }
-    textarea#userInput { flex:1; min-height:70px; max-height:240px; padding:12px; border-radius:8px; border:1px solid #e6edf6; resize:vertical; background:white; font-size:0.95rem; }
-    button.btn { background: linear-gradient(90deg,#4a6fa5,#2c4c75); color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    .message.user { background: linear-gradient(90deg,#e7f1ff,#e2f0ff); color:#071129; margin-left:auto; text-align:right; border-bottom-right-radius:6px; border-bottom-left-radius:14px; }
+    .message.assistant { background: white; color:#071129; border:1px solid #eef6ff; border-bottom-left-radius:6px; border-bottom-right-radius:14px; }
+
+    .meta { font-size:0.78rem; color:#7b8a9a; margin-bottom:6px; }
+
+    .controls {
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
+      padding-top:6px;
+      border-top:1px solid rgba(15,23,42,0.03);
+    }
+
+    .input-wrap { display:flex; gap:8px; align-items:flex-end; flex:1; }
+    textarea#userInput { flex:1; min-height:64px; max-height:220px; padding:12px 14px; border-radius:10px; border:1px solid #e6eef8; resize:vertical; background:white; font-size:0.95rem; box-shadow: inset 0 1px 0 rgba(16,24,40,0.02); }
+    textarea#userInput:focus { outline: none; border-color:#8aa8df; box-shadow:0 4px 18px rgba(58,103,184,0.08); }
+
+    button.btn { background: linear-gradient(90deg,#3f6ea8,#2b4e78); color:white; padding:12px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:0.95rem; min-width:86px; }
     button.btn:disabled { opacity:0.6; cursor:not-allowed; }
-    .small { font-size:0.9rem; color:#64748b; }
-    .consent { display:flex; gap:10px; align-items:center; margin-top:10px; }
-    .note { margin-top:12px; font-size:0.9rem; color:#334155; background:#fff3; padding:10px; border-radius:8px; }
+    .btn-outline { background:transparent; border:1px solid #cfe1fb; color:#2c4c75; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
 
-    .top-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
-    .btn-outline { background:transparent; border:1px solid #4a6fa5; color:#2c4c75; padding:8px 12px; border-radius:8px; cursor:pointer; }
-    .footer-note { margin-top:14px; font-size:0.9rem; color:#64748b; }
+    .small { font-size:0.88rem; color:#6b7b8d; }
+    .typing { display:inline-block; width:56px; height:18px; background:linear-gradient(90deg,#e8f1ff,#ffffff); border-radius:10px; padding:4px 6px; font-size:0.82rem; color:#617a9a; }
+
+    .footer-note { margin-top:10px; font-size:0.86rem; color:#6b7b8d; }
 
     @media (max-width:700px) {
-      .chat-box { height:420px; }
-      textarea#userInput { min-height:60px; }
+      .container { padding:12px; margin:12px; }
+      header .logo { font-size:16px; }
+      button.btn { min-width:72px; padding:10px 12px; }
+      textarea#userInput { min-height:56px; }
+      .chat-box { padding:12px; }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="container">
-      <div class="logo"><i class="fas fa-brain"></i>Psych统计自习室 — AI 心理疏导</div>
+    <div class="container" style="padding:0;">
+      <div class="logo"><i class="fas fa-brain"></i> Psych统计自习室 — AI 心理疏导</div>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container" style="padding-top:4px;">
     <section class="chat-section" aria-labelledby="ai-chat-title">
-      <div class="top-actions">
+      <div class="section-head">
         <div>
-          <h2 id="ai-chat-title" class="section-title"><i class="fas fa-comment-medical"></i> AI 心理疏导（认知重构辅助）</h2>
-          <div class="section-desc">该模块使用 AI 辅助你完成“认知重构五步法”。请注意：AI 不是心理健康的替代，若有严重困扰请寻求专业帮助。</div>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button id="clearBtn" class="btn-outline" title="清空对话">清空</button>
-          <button id="downloadBtn" class="btn-outline" title="下载对话（JSON）">下载对话</button>
+          <div id="ai-chat-title" class="section-title"><i class="fas fa-comment-medical"></i> AI 心理疏导（认知重构辅助）</div>
+          <div class="section-desc">AI 将按“认知重构五步法”逐步引导。请注意：若有严重困扰请寻求专业帮助。</div>
         </div>
       </div>
 
-      <div class="chat-wrapper">
-        <div class="chat-box" id="chatBox" role="log" aria-live="polite"></div>
+      <div class="chat-area" role="region" aria-label="聊天区">
+        <div class="chat-box" id="chatBox" role="log" aria-live="polite" tabindex="0"></div>
 
-        <div class="consent small">
-          <input type="checkbox" id="consentCheckbox" />
-          <label for="consentCheckbox">我同意将我的对话（匿名化）用于服务改进和记录（可撤回）。</label>
-        </div>
-        <div class="note small">会话将会以匿名会话 ID 存储（本地会话 ID 默认为随机生成），请勿输入极其敏感的个人信息（如身份证号、银行卡等）。</div>
-
-        <div class="controls">
-          <textarea id="userInput" placeholder="你最近有没有遇到一件让你感到困扰的事情？可以简单描述一下吗？（AI 会基于认知重构五步法逐步引导）"></textarea>
+        <div class="controls" role="region" aria-label="发送区域">
+          <div class="input-wrap">
+            <textarea id="userInput" placeholder="你最近有没有遇到让你困扰的事情？可以简单描述（按 Enter 发送，Shift+Enter 换行）" aria-label="消息输入框"></textarea>
+          </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <button id="sendBtn" class="btn">发送</button>
-            <button id="helpBtn" class="btn-outline" title="示例/引导">示例</button>
           </div>
         </div>
 
@@ -105,41 +120,33 @@
   <script>
     (function() {
       /**
-       * 使用说明（请务必阅读并修改）：
-       * - 将 API_URL 改为你在阿里云 API 网关/触发器得到的完整公网 URL（以 https:// 开头）。
-       * - 本地测试时不要用 file:// 直接打开页面，建议在页面目录运行本地静态服务器（例如 python -m http.server）。
-       * - 云函数必须允许 CORS 或返回 Access-Control-Allow-Origin 为你的站点域名。
+       * 请替换为你的云函数/网关完整 URL（以 https:// 开头）
        */
-      const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run'; // <-- 把这里替换为你的触发器 URL，例如: https://xxx.cn-hangzhou.fc.aliyuncs.com/2016-08-15/proxy/your-service/dev/chat
+      const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run'; // <-- 替换为你的触发器 URL
 
       const chatBox = document.getElementById('chatBox');
       const sendBtn = document.getElementById('sendBtn');
       const userInput = document.getElementById('userInput');
-      const consentCheckbox = document.getElementById('consentCheckbox');
-      const clearBtn = document.getElementById('clearBtn');
-      const downloadBtn = document.getElementById('downloadBtn');
-      const helpBtn = document.getElementById('helpBtn');
-
-      let sessionId = localStorage.getItem('psyc_session_id');
-      if (!sessionId) {
-        sessionId = 'sid-' + Math.random().toString(36).slice(2,12);
-        localStorage.setItem('psyc_session_id', sessionId);
-      }
 
       let messages = []; // {role, text, ts}
 
       function appendMessage(role, text) {
         const wrapper = document.createElement('div');
         wrapper.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+
         const meta = document.createElement('div');
         meta.className = 'meta';
         meta.textContent = (role === 'user' ? '你' : 'AI 引导') + ' · ' + new Date().toLocaleString();
+
         const content = document.createElement('div');
         content.innerHTML = text.replace(/\n/g,'<br>');
+
         wrapper.appendChild(meta);
         wrapper.appendChild(content);
         chatBox.appendChild(wrapper);
+
         chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.focus({preventScroll:true});
       }
 
       function setLoading(loading) {
@@ -149,7 +156,7 @@
         else sendBtn.textContent = '发送';
       }
 
-      // fetch with timeout helper
+      // fetch with timeout
       function fetchWithTimeout(url, options = {}, timeout = 30000) {
         return new Promise((resolve, reject) => {
           const timer = setTimeout(() => {
@@ -168,10 +175,6 @@
 
       async function sendMessage(text) {
         if (!text || !text.trim()) return;
-        if (!consentCheckbox.checked) {
-          alert('请先勾选同意记录以继续（我们会对对话进行匿名记录，用于改进服务）。');
-          return;
-        }
 
         appendMessage('user', text);
         messages.push({role:'user', text, ts: Date.now()});
@@ -179,18 +182,26 @@
         setLoading(true);
 
         try {
-          // 确保 API_URL 被替换
           if (!API_URL || API_URL === 'REPLACE_WITH_YOUR_CLOUD_FUNCTION_URL') {
             appendMessage('assistant', '抱歉，服务未配置：后端地址(API_URL)未设置。请将页面中的 API_URL 替换为你的云函数触发器 URL。');
             setLoading(false);
             return;
           }
 
+          // typing indicator
+          const typingNode = document.createElement('div');
+          typingNode.className = 'message assistant';
+          typingNode.innerHTML = '<div class="meta">AI 引导 · ' + new Date().toLocaleTimeString() + '</div><div class="typing">思考中…</div>';
+          chatBox.appendChild(typingNode);
+          chatBox.scrollTop = chatBox.scrollHeight;
+
           const resp = await fetchWithTimeout(API_URL, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ sessionId, message: text })
+            body: JSON.stringify({ message: text })
           }, 30000);
+
+          typingNode.remove();
 
           if (!resp.ok) {
             let errText = '';
@@ -200,7 +211,7 @@
             } catch (e) {
               errText = await resp.text();
             }
-            appendMessage('assistant', '抱歉，服务暂不可用：' + (errText || resp.status + ' ' + resp.statusText));
+            appendMessage('assistant', '抱歉，服务暂不可用：' + (errText || (resp.status + ' ' + resp.statusText)));
             setLoading(false);
             return;
           }
@@ -217,41 +228,18 @@
         }
       }
 
+      // Enter 发送，Shift+Enter 换行
       sendBtn.addEventListener('click', () => sendMessage(userInput.value));
       userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendMessage(userInput.value);
         }
       });
 
-      clearBtn.addEventListener('click', () => {
-        if (confirm('确认清空本次会话记录（前端显示）？服务器记录不会被删除，请在后台处理。')) {
-          chatBox.innerHTML = '';
-          messages = [];
-        }
-      });
-
-      downloadBtn.addEventListener('click', () => {
-        const payload = {sessionId, messages, exportedAt: new Date().toISOString()};
-        const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `chat_${sessionId}.json`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
-
-      helpBtn.addEventListener('click', () => {
-        const example = "最近一次课堂展示时我讲错了步骤，之后一直担心别人怎么看我，感觉很羞愧并害怕下次再出错。";
-        userInput.value = example;
-      });
-
-      // 初始提示（可注释）
-      appendMessage('assistant', '你好！我是认知重构辅助引导，若你准备好，我们可以从第1步开始。你想从第1步开始吗？');
+      // 初始友好提示
+      appendMessage('assistant', '你好！我是认知重构辅助引导。若你准备好，请描述最近让你感到困扰的一件事。');
+      setTimeout(() => { userInput.focus(); }, 300);
     })();
   </script>
 </body>
