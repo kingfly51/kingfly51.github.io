@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>Psych - 心理健康助手</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #07c160;
+      --primary-dark: #06ad56;
+      --bg-page: #ededed;
+      --bg-card: #ffffff;
+      --text-dark: #000000;
+      --text-muted: #999999;
+      --border: #e5e5e5;
+      --nav-height: 56px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans SC', 'Inter', -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-page);
+      color: var(--text-dark);
+      overflow: hidden;
+      height: 100vh;
+      position: fixed;
+      width: 100%;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* 顶部导航栏 */
+    .navbar {
+      background: var(--bg-card);
+      border-bottom: 0.5px solid var(--border);
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+
+    .navbar-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .navbar-action {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-dark);
+      font-size: 20px;
+    }
+
+    .navbar-action:active {
+      opacity: 0.6;
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: var(--bg-page);
+      padding-bottom: calc(var(--nav-height) + var(--safe-bottom));
+    }
+
+    /* ========== 对话列表页 ========== */
+    .conversation-list {
+      background: var(--bg-card);
+    }
+
+    .conversation-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .conversation-item:active {
+      background: #f7f7f7;
+    }
+
+    .conv-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #07c160, #06ad56);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+
+    .conv-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .conv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .conv-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .conv-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .conv-preview {
+      font-size: 14px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ========== 健康日历页 ========== */
+    .calendar-page {
+      padding: 16px;
+    }
+
+    .calendar-header {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .month-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .month-text {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .month-nav {
+      display: flex;
+      gap: 16px;
+    }
+
+    .month-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #f7f7f7;
+      color: var(--text-dark);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .month-btn:active {
+      opacity: 0.6;
+    }
+
+    .dimension-filter {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .calendar-insight {
+      background: #e7f9f0;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #06ad56;
+      line-height: 1.6;
+    }
+
+    .calendar-container {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .calendar-main {
+      flex: 1;
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .calendar-weekday {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 8px 0;
+      font-weight: 600;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s;
+      border: 1px solid var(--border);
+      background: white;
+    }
+
+    .calendar-day:active {
+      transform: scale(0.95);
+    }
+
+    .calendar-day.empty {
+      visibility: hidden;
+    }
+
+    .calendar-day.today {
+      border: 2px solid var(--primary);
+      font-weight: 700;
+    }
+
+    .calendar-day.has-data {
+      background: linear-gradient(135deg, rgba(7, 193, 96, 0.1), rgba(7, 193, 96, 0.05));
+    }
+
+    .calendar-day-number {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .calendar-day-icons {
+      display: flex;
+      gap: 2px;
+      font-size: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .measurement-panel {
+      width: 300px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .measurement-item {
+      padding: 12px;
+      background: #f7f7f7;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .measurement-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .measurement-btn {
+      width: 100%;
+      padding: 8px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .measurement-btn:active {
+      opacity: 0.8;
+    }
+
+    .quick-actions {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .quick-action-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .quick-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .quick-action:active {
+      background: #f7f7f7;
+    }
+
+    .quick-action-icon {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .quick-action-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ========== 训练中心页 ========== */
+    .training-page {
+      padding: 16px;
+    }
+
+    .training-section {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .training-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .training-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      border: 1px solid var(--border);
+    }
+
+    .training-card:active {
+      transform: scale(0.97);
+    }
+
+    .training-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .training-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .training-duration {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ========== 个人中心页 ========== */
+    .profile-page {
+      padding: 16px;
+    }
+
+    .profile-header {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .profile-avatar-large {
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .profile-avatar-large:active {
+      opacity: 0.8;
+    }
+
+    .profile-info h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .profile-info p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .profile-section {
+      background: var(--bg-card);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .profile-item {
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+    }
+
+    .profile-item:last-child {
+      border-bottom: none;
+    }
+
+    .profile-item:active {
+      background: #f7f7f7;
+    }
+
+    .profile-item-label {
+      font-size: 15px;
+      color: var(--text-dark);
+    }
+
+    .profile-item-value {
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 底部导航 */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      height: calc(var(--nav-height) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      z-index: 1000;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text-dark);
+    }
+
+    .nav-item:active {
+      opacity: 0.6;
+    }
+
+    .nav-item i {
+      font-size: 22px;
+    }
+
+    .nav-item span {
+      font-size: 10px;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+    }
+
+    /* 模态框 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .modal-body {
+      margin-bottom: 20px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+
+    .modal-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      min-height: 100px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .modal-select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      background: white;
+      margin-bottom: 12px;
+    }
+
+    .modal-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-btn.cancel {
+      background: #f7f7f7;
+      color: var(--text-dark);
+    }
+
+    .modal-btn.confirm {
+      background: var(--primary);
+      color: white;
+    }
+
+    .modal-btn:active {
+      opacity: 0.8;
+    }
+
+    /* 问卷界面 */
+    .questionnaire {
+      padding: 20px;
+    }
+
+    .question-item {
+      margin-bottom: 24px;
+    }
+
+    .question-text {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .slider-container {
+      padding: 20px 0;
+    }
+
+    .slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e5e5e5;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .radio-option:active {
+      background: #f7f7f7;
+    }
+
+    .radio-option input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      margin-bottom: 16px;
+    }
+
+    .empty-text {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .calendar-container {
+        flex-direction: column;
+      }
+
+      .measurement-panel {
+        width: 100%;
+      }
+
+      .training-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-action-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- 顶部导航 -->
+    <div class="navbar">
+      <div class="navbar-title" id="navbarTitle">对话</div>
+      <div class="navbar-action" id="navbarAction">
+        <i class="fas fa-plus"></i>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- ========== 对话列表页 ========== -->
+      <div id="conversationsPage">
+        <div class="conversation-list" id="conversationList">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- ========== 健康日历页 ========== -->
+      <div id="calendarPage" class="calendar-page hidden">
+        <div class="calendar-header">
+          <div class="month-selector">
+            <div class="month-text" id="monthText">2026年1月</div>
+            <div class="month-nav">
+              <button class="month-btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+              <button class="month-btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+          
+          <select class="dimension-filter" id="dimensionFilter">
+            <option value="overall">综合状态</option>
+            <option value="sleep">睡眠质量</option>
+            <option value="anxiety">焦虑指数</option>
+            <option value="depression">抑郁指数</option>
+            <option value="happiness">幸福感</option>
+            <option value="loneliness">孤独感</option>
+          </select>
+
+          <div class="calendar-insight" id="calendarInsight">
+            正在分析您的数据，为您生成个性化洞察...
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="panel-title">快速记录</div>
+          <div class="quick-action-grid">
+            <div class="quick-action" data-action="exercise">
+              <div class="quick-action-icon">🏃</div>
+              <div class="quick-action-label">运动</div>
+            </div>
+            <div class="quick-action" data-action="drink">
+              <div class="quick-action-icon">🥤</div>
+              <div class="quick-action-label">含糖饮料</div>
+            </div>
+            <div class="quick-action" data-action="sitting">
+              <div class="quick-action-icon">💺</div>
+              <div class="quick-action-label">久坐</div>
+            </div>
+            <div class="quick-action" data-action="ai">
+              <div class="quick-action-icon">🤖</div>
+              <div class="quick-action-label">AI使用</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="calendar-container">
+          <div class="calendar-main">
+            <div class="calendar-grid">
+              <div class="calendar-weekday">日</div>
+              <div class="calendar-weekday">一</div>
+              <div class="calendar-weekday">二</div>
+              <div class="calendar-weekday">三</div>
+              <div class="calendar-weekday">四</div>
+              <div class="calendar-weekday">五</div>
+              <div class="calendar-weekday">六</div>
+              <div id="calendarDays"></div>
+            </div>
+          </div>
+
+          <div class="measurement-panel">
+            <div class="panel-title">今日待测</div>
+            <div id="todayMeasurements">
+              <!-- 动态生成 -->
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <button class="measurement-btn" style="background: #1989fa;" id="openSurveysBtn">
+            <i class="fas fa-clipboard-list"></i> 专业测评工具
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== 训练中心页 ========== -->
+      <div id="trainingPage" class="training-page hidden">
+        <div class="training-section">
+          <div class="section-title">
+            <i class="fas fa-spa"></i>
+            正念冥想
+          </div>
+          <div class="training-grid" id="meditationGrid">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+
+        <div class="training-section">
+          <div class="section-title">
+            <i class="fas fa-wind"></i>
+            呼吸训练
+          </div>
+          <div class="training-grid" id="breathingGrid">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+
+        <div class="training-section">
+          <div class="section-title">
+            <i class="fas fa-bed"></i>
+            渐进放松
+          </div>
+          <div class="training-grid" id="relaxationGrid">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 个人中心页 ========== -->
+      <div id="profilePage" class="profile-page hidden">
+        <div class="profile-header">
+          <div class="profile-avatar-large" id="profileAvatarLarge">U</div>
+          <div class="profile-info">
+            <h2 id="profileName">用户昵称</h2>
+            <p id="profileUsername">@username</p>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-item" data-field="nickname">
+            <span class="profile-item-label">昵称</span>
+            <span class="profile-item-value">
+              <span id="nicknameDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="phone">
+            <span class="profile-item-label">手机号</span>
+            <span class="profile-item-value">
+              <span id="phoneDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="email">
+            <span class="profile-item-label">邮箱</span>
+            <span class="profile-item-value">
+              <span id="emailDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="age">
+            <span class="profile-item-label">年龄</span>
+            <span class="profile-item-value">
+              <span id="ageDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="gender">
+            <span class="profile-item-label">性别</span>
+            <span class="profile-item-value">
+              <span id="genderDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="education">
+            <span class="profile-item-label">受教育程度</span>
+            <span class="profile-item-value">
+              <span id="educationDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="occupation">
+            <span class="profile-item-label">职业</span>
+            <span class="profile-item-value">
+              <span id="occupationDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+          <div class="profile-item" data-field="bio">
+            <span class="profile-item-label">个人简介</span>
+            <span class="profile-item-value">
+              <span id="bioDisplay">未设置</span>
+              <i class="fas fa-chevron-right"></i>
+            </span>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-item" id="logoutBtn">
+            <span class="profile-item-label" style="color: #ff5a5f; text-align: center; width: 100%;">退出登录</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" data-page="conversations">
+        <i class="fas fa-comments"></i>
+        <span>对话</span>
+      </div>
+      <div class="nav-item" data-page="calendar">
+        <i class="fas fa-calendar-alt"></i>
+        <span>日历</span>
+      </div>
+      <div class="nav-item" data-page="training">
+        <i class="fas fa-spa"></i>
+        <span>训练</span>
+      </div>
+      <div class="nav-item" data-page="profile">
+        <i class="fas fa-user"></i>
+        <span>我的</span>
+      </div>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
