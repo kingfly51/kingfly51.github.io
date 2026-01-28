@@ -137,14 +137,28 @@
       // 替换为你的后端地址
       const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
 
-      /* ===============================
-      * 🔴 新增：会话 sessionId（本地持久）
-      * =============================== */
-      let sessionId = localStorage.getItem('psych_session_id');
-      if (!sessionId) {
-          sessionId = crypto.randomUUID();
-          localStorage.setItem('psych_session_id', sessionId);
+     /* ===============================
+     * 🔴 会话 sessionId（URL + localStorage 双保险）
+     * =============================== */
+     function getSessionId() {
+        const params = new URLSearchParams(window.location.search);
+        let sid = params.get('sid');
+
+        if (!sid) {
+          sid = crypto.randomUUID();
+          params.set('sid', sid);
+          window.history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
+        }
+
+        // localStorage 作为备份
+        try {
+          localStorage.setItem('psych_session_id', sid);
+        } catch(e){}
+
+        return sid;
       }
+
+      const sessionId = getSessionId();
 
       const messagesEl = document.getElementById('messages');
       const chatBox = document.getElementById('chatBox');
