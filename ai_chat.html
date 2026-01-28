@@ -6,131 +6,134 @@
   <title>AI 心理疏导 - Psych统计自习室</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* 移动优先：整屏布局，输入固定底部，消息区占据剩余空间并可滚动 */
-    :root {
-      --primary-1: #3f6ea8;
-      --primary-2: #2b4e78;
-      --muted: #7b8a9a;
-      --bg: #ffffff;
-      --chat-bg: #f7fbff;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    :root{
+      --primary-1:#3f6ea8;
+      --primary-2:#2b4e78;
+      --muted:#7b8a9a;
+      --bg:#ffffff;
+      --chat-bg:#f7fbff;
+      --safe-bottom: env(safe-area-inset-bottom, 12px);
+      --controls-height: 68px; /* 控件高度（含内边距）——用于 chat 区底部内边距计算 */
     }
-    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-    html, body { height:100%; background:var(--bg); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
-    .app { min-height:100vh; display:flex; flex-direction:column; }
 
-    /* 容器：居中但高度可用 */
-    .container { width:100%; max-width:920px; margin:0 auto; padding:8px 12px; display:flex; flex-direction:column; gap:8px; flex:1; }
+    /* 基础重置 */
+    *{box-sizing:border-box;margin:0;padding:0;font-family: "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;}
+    html,body,#app{height:100%;}
+    body{background:var(--bg); color:#1f2937; -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 
-    /* 紧凑 header */
-    header { background: linear-gradient(135deg, var(--primary-1) 0%, var(--primary-2) 100%); padding:8px 12px; color:#fff; border-radius:8px; box-shadow: 0 4px 12px rgba(44,76,117,0.08); }
-    .logo { display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; }
-    .logo i { font-size:18px; }
+    /* 整页布局：使用视口高度，header + chat-area，发送控件固定在底部 */
+    .app{height:100vh; display:flex; flex-direction:column; align-items:center; background:var(--bg);}
 
-    /* 聊天区：占据剩余空间 */
-    .chat-section { background: white; border-radius:10px; box-shadow: 0 6px 18px rgba(20,40,60,0.04); display:flex; flex-direction:column; flex:1; overflow:hidden; }
+    /* 限宽居中容器（页面内容居中但适应手机宽度） */
+    .viewport { width:100%; max-width:920px; height:100%; display:flex; flex-direction:column; }
 
-    .section-head { padding:10px 12px 6px 12px; }
-    .section-title { color:#123458; font-size:1rem; display:flex; align-items:center; gap:8px; }
-    .section-desc { color:var(--muted); font-size:0.88rem; margin-top:6px; }
+    /* header 紧凑 */
+    header{padding:8px 12px; border-bottom:1px solid rgba(15,23,42,0.03); background:transparent;}
+    .logo{display:flex; align-items:center; gap:8px; font-weight:700; color:#123458; font-size:15px;}
+    .logo i{color:var(--primary-1); font-size:18px;}
 
-    /* chat-box 占用剩余空间：重要 min-height:0 保证��� flex 容器中可滚动 */
-    .chat-box {
-      background: var(--chat-bg);
-      border-radius: 8px;
+    /* 聊天主区：占满 header 与底部控件之��剩余空间 */
+    .chat-wrapper{flex:1; display:flex; flex-direction:column; min-height:0; /* 关键：使内部可滚动 */ }
+
+    /* chat-box 占用大部分空间并滚动；注意 padding-bottom 为控件高度，防止被固定控件遮挡 */
+    .chat-box{
+      flex:1 1 auto;
+      min-height:0; /* 关键：在 flex 中允许溢出滚动 */
+      margin:8px 12px;
+      border-radius:10px;
+      background:var(--chat-bg);
+      border:1px solid rgba(230,240,250,1);
       padding:12px;
-      margin: 0 12px;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      border: 1px solid rgba(230,240,250,1);
-      scroll-behavior: smooth;
+      padding-bottom: calc(var(--controls-height) + var(--safe-bottom) + 12px);
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      scroll-behavior:smooth;
     }
 
-    .messages { display:flex; flex-direction:column; gap:10px; }
+    .messages{display:flex; flex-direction:column; gap:10px;}
 
-    .message { max-width:84%; padding:10px 12px; border-radius:12px; line-height:1.45; word-break:break-word; box-shadow: 0 2px 6px rgba(20,40,60,0.03); opacity:0; transform: translateY(6px); animation: fadeUp .14s forwards; }
-    @keyframes fadeUp { to { opacity:1; transform: translateY(0); } }
+    .message{max-width:86%; padding:10px 12px; border-radius:12px; line-height:1.45; word-break:break-word; box-shadow:0 2px 6px rgba(20,40,60,0.03); opacity:0; transform:translateY(6px); animation:fadeUp .12s forwards;}
+    @keyframes fadeUp{to{opacity:1; transform:translateY(0);} }
 
-    .message.user { background: linear-gradient(90deg,#eef6ff,#e9f2ff); color:#071129; margin-left:auto; text-align:right; border-bottom-right-radius:6px; }
-    .message.assistant { background: #fff; color:#071129; border:1px solid #eef6ff; border-bottom-left-radius:6px; }
+    .message.user{background:linear-gradient(90deg,#eef6ff,#e9f2ff); color:#071129; margin-left:auto; text-align:right; border-bottom-right-radius:6px;}
+    .message.assistant{background:#fff; color:#071129; border:1px solid #eef6ff; border-bottom-left-radius:6px;}
 
-    .meta { font-size:0.74rem; color:var(--muted); margin-bottom:6px; }
+    .meta{font-size:0.72rem; color:var(--muted); margin-bottom:6px;}
 
-    /* controls 固定高度，位于聊天区底部；使用 safe-area 底部填充 */
+    /* 底部固定的发送控件：居中显示于视口底端，适配安全区 */
     .controls {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(var(--safe-bottom));
+      width: calc(100% - 24px);
+      max-width: 920px;
       display:flex;
       gap:8px;
       align-items:center;
-      padding:10px 12px;
-      border-top:1px solid rgba(15,23,42,0.03);
-      background: linear-gradient(180deg, rgba(255,255,255,0.0), rgba(255,255,255,0.25));
-      padding-bottom: calc(10px + var(--safe-bottom));
+      padding:10px;
+      height: calc(var(--controls-height) - 8px);
+      background: rgba(255,255,255,0.98);
+      border-top-left-radius:12px;
+      border-top-right-radius:12px;
+      box-shadow: 0 -6px 18px rgba(20,40,60,0.04);
+      border: 1px solid rgba(230,240,250,0.8);
+      z-index: 60;
     }
 
-    .input-wrap { display:flex; gap:8px; align-items:center; flex:1; }
-    textarea#userInput {
-      flex:1;
-      height:52px;           /* 固定高度，保证 chat-box 大小稳定 */
+    .input-wrap{flex:1; display:flex; align-items:center;}
+    textarea#userInput{
+      width:100%;
+      height:48px;
       padding:10px 12px;
       border-radius:10px;
       border:1px solid #e6eef8;
-      resize:none;           /* 固定高度，不允许拖拽改变以保持消息区不变 */
+      resize:none;
       font-size:0.95rem;
       background:white;
     }
-    textarea#userInput:focus { outline:none; border-color:#8aa8df; box-shadow:0 6px 18px rgba(58,103,184,0.06); }
+    textarea#userInput:focus{outline:none; box-shadow:0 6px 18px rgba(58,103,184,0.06); border-color:#8aa8df;}
 
-    button#sendBtn { background: linear-gradient(90deg,var(--primary-1),var(--primary-2)); color:white; padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:700; min-width:78px; }
-    button#sendBtn:disabled { opacity:0.6; cursor:not-allowed; }
+    #sendBtn{background:linear-gradient(90deg,var(--primary-1),var(--primary-2)); color:white; padding:10px 14px; border-radius:10px; border:none; font-weight:700; cursor:pointer; min-width:76px;}
+    #sendBtn:disabled{opacity:0.6; cursor:not-allowed;}
 
-    /* typing indicator 小样式（可复用） */
-    .typing { display:inline-block; padding:6px 8px; border-radius:10px; background:linear-gradient(90deg,#e8f1ff,#ffffff); color:var(--muted); font-size:0.82rem; }
-
-    /* 响应式调整 */
-    @media (max-width:700px) {
-      .container { padding:8px 10px; }
-      .logo { font-size:14px; }
-      textarea#userInput { height:48px; font-size:0.94rem; }
-      button#sendBtn { min-width:64px; padding:9px 10px; }
-      .chat-box { padding:10px; }
+    /* 当键盘弹起，fixed 元素在许多手机浏览器会自动随视口上移；同时监听 resize 以保持滚动底部 */
+    @media (max-width:700px){
+      .chat-box{margin:6px 10px; padding-bottom: calc(var(--controls-height) + var(--safe-bottom) + 8px);}
+      .controls{width: calc(100% - 20px); padding:8px; height:64px;}
+      textarea#userInput{height:44px;}
     }
+
+    /* 去掉默认滚动条影响视觉（可选） */
+    ::-webkit-scrollbar{width:8px;height:8px;}
+    ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.08); border-radius:8px;}
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="container">
+  <div id="app" class="app">
+    <div class="viewport">
       <header>
         <div class="logo"><i class="fas fa-brain"></i> Psych统计自习室 — AI 心理疏导</div>
       </header>
 
-      <section class="chat-section" aria-labelledby="ai-chat-title">
-        <div class="section-head">
-          <div id="ai-chat-title" class="section-title">
-            <i class="fas fa-comment-medical"></i>
-            <span>AI 心理疏导（认知重构辅助）</span>
-          </div>
-          <div class="section-desc" style="margin-top:6px; color:var(--muted); font-size:0.88rem;">
-            AI 将按“认知重构五步法”逐步引导。
-          </div>
+      <div class="chat-wrapper">
+        <div id="chatBox" class="chat-box" role="log" aria-live="polite" tabindex="0">
+          <div id="messages" class="messages"></div>
         </div>
+      </div>
+    </div>
 
-        <div class="chat-box" id="chatBox" role="log" aria-live="polite" tabindex="0">
-          <div class="messages" id="messages"></div>
-        </div>
-
-        <div class="controls" role="region" aria-label="发送区域">
-          <div class="input-wrap">
-            <textarea id="userInput" placeholder="请简要描述最近让你困扰的一件事" aria-label="消息输入"></textarea>
-          </div>
-          <button id="sendBtn">发送</button>
-        </div>
-      </section>
+    <!-- 底部控件固定在视口底端 -->
+    <div class="controls" role="region" aria-label="发送区域">
+      <div class="input-wrap">
+        <textarea id="userInput" placeholder="请简要描述最近让你困扰的一件事" aria-label="消息输入"></textarea>
+      </div>
+      <button id="sendBtn">发送</button>
     </div>
   </div>
 
   <script>
-    (function() {
+    (function(){
       // 替换为你的后端地址
       const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
 
@@ -139,88 +142,78 @@
       const sendBtn = document.getElementById('sendBtn');
       const userInput = document.getElementById('userInput');
 
-      let messages = [];
-
-      function createMessageNode(role, text) {
+      // 创建消息节点
+      function createMessageNode(role, text){
         const wrapper = document.createElement('div');
         wrapper.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
-
         const meta = document.createElement('div');
         meta.className = 'meta';
         meta.textContent = (role === 'user' ? '你' : 'AI 引导') + ' · ' + new Date().toLocaleTimeString();
-
         const content = document.createElement('div');
-        // 简单换行处理；若后端不可信请对 text 进行转义再插入
+        // 简单换行处理（若后端不可信请先做文本转义）
         content.innerHTML = text.replace(/\n/g, '<br>');
-
         wrapper.appendChild(meta);
         wrapper.appendChild(content);
         return wrapper;
       }
 
-      function scrollToBottom() {
-        // 把 chatBox 滚到底部
+      // 滚动到底部（保留一些可见缓冲）
+      function scrollToBottom(){
+        // scrollTop to full height
         chatBox.scrollTop = chatBox.scrollHeight;
       }
 
-      function appendMessage(role, text) {
+      function appendMessage(role, text){
         const node = createMessageNode(role, text);
         messagesEl.appendChild(node);
-        // 保持消息区高度不变，消息在内部滚动
         scrollToBottom();
       }
 
-      function setLoading(loading) {
-        sendBtn.disabled = loading;
-        userInput.disabled = loading;
-        sendBtn.textContent = loading ? '思考中...' : '发送';
+      function setLoading(v){
+        sendBtn.disabled = v;
+        userInput.disabled = v;
+        sendBtn.textContent = v ? '思考中...' : '发送';
       }
 
-      function fetchWithTimeout(url, options = {}, timeout = 30000) {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('请求超时')), timeout);
-          fetch(url, options).then((res) => { clearTimeout(timer); resolve(res); }).catch((err) => { clearTimeout(timer); reject(err); });
+      function fetchWithTimeout(url, options = {}, timeout = 30000){
+        return new Promise((resolve,reject) => {
+          const t = setTimeout(() => reject(new Error('请求超时')), timeout);
+          fetch(url, options).then(res => { clearTimeout(t); resolve(res); }).catch(err => { clearTimeout(t); reject(err); });
         });
       }
 
-      async function sendMessage(text) {
-        if (!text || !text.trim()) return;
+      async function sendMessage(text){
+        if(!text || !text.trim()) return;
         appendMessage('user', text);
-        messages.push({role:'user', text, ts: Date.now()});
         userInput.value = '';
         setLoading(true);
 
-        // typing indicator
-        const typingNode = document.createElement('div');
-        typingNode.className = 'message assistant';
-        typingNode.innerHTML = '<div class="meta">AI 引导 · ' + new Date().toLocaleTimeString() + '</div><div class="typing">思考中…</div>';
+        // 添加 typing 占位
+        const typingNode = createMessageNode('assistant', '思考中…');
+        typingNode.querySelector('.meta').textContent = 'AI 引导 · ' + new Date().toLocaleTimeString();
+        typingNode.querySelector('div:nth-child(2)').classList.add('typing');
         messagesEl.appendChild(typingNode);
         scrollToBottom();
 
-        try {
-          if (!API_URL || API_URL === 'REPLACE_WITH_YOUR_CLOUD_FUNCTION_URL') {
+        try{
+          if(!API_URL || API_URL === 'REPLACE_WITH_YOUR_CLOUD_FUNCTION_URL'){
             typingNode.remove();
-            appendMessage('assistant', '抱歉，服务未配置：后端地址(API_URL)未设置。请将页面中的 API_URL 替换为你的云函数触发器 URL。');
+            appendMessage('assistant', '抱歉，服务未配置：后端地址(API_URL)未设置。');
             setLoading(false);
             return;
           }
 
           const resp = await fetchWithTimeout(API_URL, {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ message: text })
           }, 30000);
 
           typingNode.remove();
 
-          if (!resp.ok) {
+          if(!resp.ok){
             let errText = '';
-            try {
-              const j = await resp.json();
-              errText = j.error || JSON.stringify(j);
-            } catch (e) {
-              errText = await resp.text();
-            }
+            try { const j = await resp.json(); errText = j.error || JSON.stringify(j); } catch(e){ errText = await resp.text(); }
             appendMessage('assistant', '抱歉，服务暂不可用：' + (errText || (resp.status + ' ' + resp.statusText)));
             setLoading(false);
             return;
@@ -229,8 +222,7 @@
           const data = await resp.json();
           const assistantText = data.reply || '[未返回内容]';
           appendMessage('assistant', assistantText);
-          messages.push({role:'assistant', text: assistantText, ts: Date.now()});
-        } catch (e) {
+        } catch(e){
           console.error(e);
           typingNode.remove();
           appendMessage('assistant', '发生错误，请稍后再试：' + (e.message || e));
@@ -239,20 +231,31 @@
         }
       }
 
-      // 交互：Enter 发送，Shift+Enter 换行
-      sendBtn.addEventListener('click', () => sendMessage(userInput.value));
+      // 事件：Enter 发送，Shift+Enter 换行
+      sendBtn.addEventListener('click', () => { sendMessage(userInput.value); });
+
       userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if(e.key === 'Enter' && !e.shiftKey){
           e.preventDefault();
           sendMessage(userInput.value);
         }
       });
 
-      // 初始提示 —— 可删或改
+      // 当输入框获得焦点时（尤其是移动端弹键盘），把消息区滚到底
+      userInput.addEventListener('focus', () => { setTimeout(scrollToBottom, 300); });
+
+      // 监听视口变化（键盘弹起/收起），保证滚动到底部
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { scrollToBottom(); }, 120);
+      });
+
+      // 初始提示（可删除）
       appendMessage('assistant', '你好！我是认知重构辅助引导。若你准备好，请描述最近让你感到困扰的一件事。');
 
-      // 监听尺寸/键盘变化，确保滚动到底
-      window.addEventListener('resize', () => { setTimeout(scrollToBottom, 120); });
+      // 首次滚动并聚焦输入框以便手机用户立即输入
+      setTimeout(() => { scrollToBottom(); userInput.focus(); }, 300);
     })();
   </script>
 </body>
