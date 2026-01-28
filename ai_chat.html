@@ -137,6 +137,15 @@
       // 替换为你的后端地址
       const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
 
+      /* ===============================
+      * 🔴 新增：会话 sessionId（本地持久）
+      * =============================== */
+      let sessionId = localStorage.getItem('psych_session_id');
+      if (!sessionId) {
+          sessionId = crypto.randomUUID();
+          localStorage.setItem('psych_session_id', sessionId);
+      }
+
       const messagesEl = document.getElementById('messages');
       const chatBox = document.getElementById('chatBox');
       const sendBtn = document.getElementById('sendBtn');
@@ -206,7 +215,10 @@
           const resp = await fetchWithTimeout(API_URL, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ message: text })
+            body: JSON.stringify({
+                  sessionId: sessionId,
+                  message: text
+                  })
           }, 30000);
 
           typingNode.remove();
