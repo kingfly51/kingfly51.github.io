@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>登录 - Psych心理健康</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #07c160;
+      --primary-dark: #06ad56;
+      --bg-page: #ededed;
+      --text-dark: #000000;
+      --text-muted: #999999;
+      --border: #e5e5e5;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans SC', -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: var(--bg-page);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .logo-icon i {
+      font-size: 40px;
+      color: white;
+    }
+    .logo-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+    .logo-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .auth-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.3s;
+    }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .password-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .submit-btn:active {
+      opacity: 0.8;
+    }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .message.show {
+      display: block;
+    }
+    .message.error {
+      background: #fee;
+      color: #f44;
+      border: 1px solid #fcc;
+    }
+    .message.success {
+      background: #efe;
+      color: #4a4;
+      border: 1px solid #cfc;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-section">
+      <div class="logo-icon">
+        <i class="fas fa-brain"></i>
+      </div>
+      <h1 class="logo-title">Psych心理健康</h1>
+      <p class="logo-subtitle">AI陪伴·认知重构·健康管理</p>
+    </div>
+
+    <div class="auth-card">
+      <div class="tabs">
+        <div class="tab active" id="loginTab">登录</div>
+        <div class="tab" id="registerTab">注册</div>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <div class="input-wrapper">
+            <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrapper">
+            <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+            <i class="fas fa-eye password-toggle" id="loginPasswordToggle"></i>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn" id="loginBtn">登录</button>
+      </form>
+
+      <form id="registerForm" class="hidden">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input type="text" class="form-input" id="registerUsername" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">邮箱（选填）</label>
+          <input type="email" class="form-input" id="registerEmail" placeholder="请输入邮箱">
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrapper">
+            <input type="password" class="form-input" id="registerPassword" placeholder="至少6位密码" required>
+            <i class="fas fa-eye password-toggle" id="registerPasswordToggle"></i>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">确认密码</label>
+          <input type="password" class="form-input" id="registerPasswordConfirm" placeholder="再次输入密码" required>
+        </div>
+        <button type="submit" class="submit-btn" id="registerBtn">注册</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+    
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const messageEl = document.getElementById('message');
+
+    loginTab.addEventListener('click', () => {
+      loginTab.classList.add('active');
+      registerTab.classList.remove('active');
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+      hideMessage();
+    });
+
+    registerTab.addEventListener('click', () => {
+      registerTab.classList.add('active');
+      loginTab.classList.remove('active');
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      hideMessage();
+    });
+
+    document.getElementById('loginPasswordToggle').addEventListener('click', function() {
+      const input = document.getElementById('loginPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    document.getElementById('registerPasswordToggle').addEventListener('click', function() {
+      const input = document.getElementById('registerPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    function showMessage(text, type = 'error') {
+      messageEl.textContent = text;
+      messageEl.className = `message ${type} show`;
+    }
+
+    function hideMessage() {
+      messageEl.className = 'message';
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const btn = document.getElementById('loginBtn');
+
+      if (!username || !password) {
+        showMessage('请填写完整信息');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user_id', data.user_id);
+          localStorage.setItem('username', data.username);
+          showMessage('登录成功！', 'success');
+          setTimeout(() => window.location.href = 'psy_index.html', 500);
+        } else {
+          showMessage(data.error || '登录失败');
+        }
+      } catch (error) {
+        showMessage('网络错误，请稍后重试');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '登录';
+      }
+    });
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('registerUsername').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value.trim();
+      const passwordConfirm = document.getElementById('registerPasswordConfirm').value.trim();
+      const btn = document.getElementById('registerBtn');
+
+      if (!username || !password || !passwordConfirm) {
+        showMessage('请填写完整信息');
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        showMessage('两次输入的密码不一致');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('密码长度不能少于6位');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '注册中...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showMessage('注册成功！请登录', 'success');
+          setTimeout(() => {
+            loginTab.click();
+            document.getElementById('loginUsername').value = username;
+          }, 1000);
+        } else {
+          showMessage(data.error || '注册失败');
+        }
+      } catch (error) {
+        showMessage('网络错误，请稍后重试');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '注册';
+      }
+    });
+  </script>
+</body>
+</html>
