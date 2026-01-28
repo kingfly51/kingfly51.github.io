@@ -723,6 +723,43 @@
         grid-template-columns: 1fr;
       }
     }
+    @media (max-width: 480px) {
+  .calendar-main {
+    padding: 12px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .calendar-weekday {
+    font-size: 11px;
+    padding: 4px 0;
+  }
+
+  .calendar-day {
+    aspect-ratio: auto;
+    min-height: 42px;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 2px 0;
+  }
+
+  .calendar-day-number {
+    font-size: 12px;
+    margin-bottom: 0;
+  }
+
+  .calendar-day-icons {
+    font-size: 8px;
+    gap: 1px;
+    margin-top: 1px;
+  }
+
+  .calendar-day-icons span:nth-child(n+3) {
+    display: none;
+  }
+}
   </style>
 </head>
 <body>
