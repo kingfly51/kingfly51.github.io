@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>登录 - Psych统计自习室</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4a90e2;
+      --primary-dark: #357abd;
+      --accent: #7c4dff;
+      --text-dark: #1a1a2e;
+      --text-muted: #6b7280;
+      --bg-light: #f8fafc;
+      --white: #ffffff;
+      --error: #ef4444;
+      --success: #10b981;
+      --shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans SC', 'Poppins', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 动态背景装饰 */
+    .bg-decoration {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .bg-decoration:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      background: white;
+      top: -100px;
+      left: -100px;
+      animation-delay: 0s;
+    }
+
+    .bg-decoration:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      background: white;
+      bottom: -50px;
+      right: -50px;
+      animation-delay: 5s;
+    }
+
+    .bg-decoration:nth-child(3) {
+      width: 150px;
+      height: 150px;
+      background: white;
+      top: 50%;
+      right: 10%;
+      animation-delay: 10s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(180deg); }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .auth-card {
+      background: var(--white);
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .logo-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(74, 144, 226, 0.3);
+    }
+
+    .logo-icon i {
+      font-size: 36px;
+      color: white;
+    }
+
+    .logo-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      background: var(--bg-light);
+      padding: 6px;
+      border-radius: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 18px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px 14px 48px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(74, 144, 226, 0.3);
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(74, 144, 226, 0.4);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #fee2e2;
+      color: var(--error);
+      border: 1px solid #fecaca;
+    }
+
+    .message.success {
+      background: #d1fae5;
+      color: var(--success);
+      border: 1px solid #a7f3d0;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 18px;
+      user-select: none;
+    }
+
+    .form-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      .auth-card {
+        padding: 36px 28px;
+      }
+
+      .logo-title {
+        font-size: 24px;
+      }
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+
+  <div class="container">
+    <div class="auth-card">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <i class="fas fa-brain"></i>
+        </div>
+        <h1 class="logo-title">Psych统计自习室</h1>
+        <p class="logo-subtitle">AI 心理疏导 · 认知重构平台</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="loginTab">登录</button>
+        <button class="tab" id="registerTab">注册</button>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <!-- 登录表单 -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <div class="input-wrapper">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+            <i class="fas fa-eye password-toggle" id="loginPasswordToggle"></i>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="loginBtn">登录</button>
+      </form>
+
+      <!-- 注册表单 -->
+      <form id="registerForm" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <div class="input-wrapper">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" class="form-input" id="registerUsername" placeholder="请输入用户名" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">邮箱（选填）</label>
+          <div class="input-wrapper">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" class="form-input" id="registerEmail" placeholder="请输入邮箱">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" class="form-input" id="registerPassword" placeholder="至少6位密码" required>
+            <i class="fas fa-eye password-toggle" id="registerPasswordToggle"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">确认密码</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" class="form-input" id="registerPasswordConfirm" placeholder="再次输入密码" required>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="registerBtn">注册</button>
+      </form>
+
+      <div class="form-footer">
+        <p>使用本平台即表示您同意我们的服务条款</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+    
+    // Tab切换
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const messageEl = document.getElementById('message');
+
+    loginTab.addEventListener('click', () => {
+      loginTab.classList.add('active');
+      registerTab.classList.remove('active');
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      hideMessage();
+    });
+
+    registerTab.addEventListener('click', () => {
+      registerTab.classList.add('active');
+      loginTab.classList.remove('active');
+      registerForm.style.display = 'block';
+      loginForm.style.display = 'none';
+      hideMessage();
+    });
+
+    // 密码显示/隐藏
+    document.getElementById('loginPasswordToggle').addEventListener('click', function() {
+      const input = document.getElementById('loginPassword');
+      const type = input.type === 'password' ? 'text' : 'password';
+      input.type = type;
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    document.getElementById('registerPasswordToggle').addEventListener('click', function() {
+      const input = document.getElementById('registerPassword');
+      const type = input.type === 'password' ? 'text' : 'password';
+      input.type = type;
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    // 消息提示
+    function showMessage(text, type = 'error') {
+      messageEl.textContent = text;
+      messageEl.className = `message ${type} show`;
+    }
+
+    function hideMessage() {
+      messageEl.className = 'message';
+    }
+
+    // 登录
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const btn = document.getElementById('loginBtn');
+
+      if (!username || !password) {
+        showMessage('请填写完整信息');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>登录中...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user_id', data.user_id);
+          localStorage.setItem('username', data.username);
+          showMessage('登录成功！', 'success');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } else {
+          showMessage(data.error || '登录失败');
+        }
+      } catch (error) {
+        showMessage('网络错误，请稍后重试');
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '登录';
+      }
+    });
+
+    // 注册
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('registerUsername').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value.trim();
+      const passwordConfirm = document.getElementById('registerPasswordConfirm').value.trim();
+      const btn = document.getElementById('registerBtn');
+
+      if (!username || !password || !passwordConfirm) {
+        showMessage('请填写完整信息');
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        showMessage('两次输入的密码不一致');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('密码长度不能少于6位');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>注册中...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showMessage('注册成功！请登录', 'success');
+          setTimeout(() => {
+            loginTab.click();
+            document.getElementById('loginUsername').value = username;
+          }, 1500);
+        } else {
+          showMessage(data.error || '注册失败');
+        }
+      } catch (error) {
+        showMessage('网络错误，请稍后重试');
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '注册';
+      }
+    });
+  </script>
+</body>
+</html>
