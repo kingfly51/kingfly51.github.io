@@ -738,7 +738,7 @@ window.submitQuestionnaire = async function(dimension, btn) {
 
 // 专业测评工具
 document.getElementById('openSurveysBtn').addEventListener('click', () => {
-  window.open('https://www.wjx.cn', '_blank');
+  window.open('https://v.wjx.cn/vm/OtNf3pW.aspx#', '_blank');
 });
 
 // =======================================
