@@ -12,7 +12,7 @@ class AudioPlayer {
   getPlaylist() {
     return {
       meditation: {
-        '身体扫描冥想': { duration: 900, url: 'audio/meditation/body-scan.mp3' },
+        '身体扫描冥想': { duration: 300, url: 'audio/meditation/body-scan.mp3' },
         '呼吸觉察冥想': { duration: 600, url: 'audio/meditation/breath-awareness.mp3' },
         '慈心冥想': { duration: 720, url: 'audio/meditation/loving-kindness.mp3' },
         '行走冥想': { duration: 480, url: 'audio/meditation/walking.mp3' },
