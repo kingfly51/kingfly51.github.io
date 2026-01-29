@@ -747,8 +747,8 @@ document.getElementById('openSurveysBtn').addEventListener('click', () => {
 function loadTraining() {
   const meditationData = [
     { name: '身体扫描冥想', duration: '5分钟', icon: '🧘' },
-    { name: '呼吸觉察冥想', duration: '10分钟', icon: '🌬️' },
-    { name: '慈心冥想', duration: '12分钟', icon: '💚' },
+    { name: '呼吸觉察冥想', duration: '5分钟', icon: '🌬️' },
+    { name: '慈心冥想', duration: '8分钟', icon: '💚' },
     { name: '行走冥想', duration: '8分钟', icon: '🚶' },
     { name: '正念进食', duration: '10分钟', icon: '🍽️' },
     { name: '睡前冥想', duration: '20分钟', icon: '🌙' }
@@ -764,9 +764,9 @@ function loadTraining() {
   
   const breathingData = [
     { name: '4-7-8呼吸法', duration: '5分钟', icon: '💨' },
-    { name: '腹式呼吸', duration: '8分钟', icon: '🫁' },
+    { name: '腹式呼吸', duration: '3分钟', icon: '🫁' },
     { name: '盒式呼吸', duration: '6分钟', icon: '📦' },
-    { name: '交替鼻孔呼吸', duration: '10分钟', icon: '👃' }
+    { name: '交替鼻孔呼吸', duration: '5分钟', icon: '👃' }
   ];
   
   document.getElementById('breathingGrid').innerHTML = breathingData.map(item => `
@@ -778,9 +778,9 @@ function loadTraining() {
   `).join('');
   
   const relaxationData = [
-    { name: '全身肌肉放松', duration: '15分钟', icon: '💪' },
+    { name: '全身肌肉放松', duration: '5分钟', icon: '💪' },
     { name: '快速放松训练', duration: '5分钟', icon: '⚡' },
-    { name: '睡眠放松引导', duration: '25分钟', icon: '😴' }
+    { name: '睡眠放松引导', duration: '15分钟', icon: '😴' }
   ];
   
   document.getElementById('relaxationGrid').innerHTML = relaxationData.map(item => `
