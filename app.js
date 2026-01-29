@@ -746,7 +746,7 @@ document.getElementById('openSurveysBtn').addEventListener('click', () => {
 // =======================================
 function loadTraining() {
   const meditationData = [
-    { name: '身体扫描冥想', duration: '15分钟', icon: '🧘' },
+    { name: '身体扫描冥想', duration: '5分钟', icon: '🧘' },
     { name: '呼吸觉察冥想', duration: '10分钟', icon: '🌬️' },
     { name: '慈心冥想', duration: '12分钟', icon: '💚' },
     { name: '行走冥想', duration: '8分钟', icon: '🚶' },
