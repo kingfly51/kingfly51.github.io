@@ -243,7 +243,7 @@ function updateDayIcons(day, record) {
     if (record.exercise) { icons += '🏃'; hasData = true; }
     if (record.drink) { icons += '🥤'; hasData = true; }
     if (record.sitting) { icons += '💺'; hasData = true; }
-    if (record.ai) { icons += '🤖'; hasData = true; }
+    if (record.ai) { icons += '🧂'; hasData = true; }
   } else if (selectedDimension === 'sleep') {
     if (record.sleep) {
       icons = getScoreIcon(record.sleep.score);
@@ -426,7 +426,7 @@ function renderDayDetails(dayData, dateStr) {
     { key: 'exercise', name: '运动', icon: '🏃' },
     { key: 'drink', name: '含糖饮料', icon: '🥤' },
     { key: 'sitting', name: '久坐', icon: '💺' },
-    { key: 'ai', name: 'AI使用', icon: '🤖' }
+    { key: 'ai', name: '高脂高盐饮食', icon: '🧂' }
   ];
   
   html += '<div><h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">活动记录</h3>';
@@ -484,7 +484,7 @@ document.querySelectorAll('.quick-action').forEach(action => {
       exercise: '运动',
       drink: '含糖饮料',
       sitting: '久坐',
-      ai: 'AI使用'
+      ai: '高脂高盐饮食'
     };
     
     const overlay = document.createElement('div');
@@ -620,7 +620,7 @@ window.openAnxietyQuestionnaire = function() {
 
 window.openDepressionQuestionnaire = function() {
   showQuestionnaire('depression', '抑郁指数评估', [
-    { type: 'slider', question: '今天您的心情如何？', min: 0, max: 10, labels: ['非常低落', '非常愉快'] },
+    { type: 'slider', question: '今天您感到抑郁的程度？', min: 0, max: 10, labels: ['非常低落', '非常愉快'] },
     { type: 'radio', question: '您对日常活动的兴趣程度？', options: ['完全没兴趣', '兴趣较少', '有一些兴趣', '非常有兴趣'] },
     { type: 'radio', question: '您感到自己无价值或自责吗？', options: ['从不', '偶尔', '经常', '总是'] }
   ]);
