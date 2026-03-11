@@ -658,12 +658,14 @@ async function saveResult(){
   localStorage.setItem('ts_cc',JSON.stringify(cnt));
   try{
     const tok=localStorage.getItem('token')||'';
-    await fetch('/api/experiments/result',{
+    const API_BASE='https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+    await fetch(API_BASE+'/api/experiments/result?token='+encodeURIComponent(tok),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({experiment_type:'temperature',result:tsD,timestamp:tsD.timestamp})
     });
-  }catch(e){console.log('[Exp] offline');}
+    console.log('[Exp] 温度实验数据已保存');
+  }catch(e){console.log('[Exp] 保存失败:', e);}
 }
 
 window.addEventListener('load',init);

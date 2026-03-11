@@ -105,13 +105,14 @@ function fixCross(opacity='.5'){
     font-weight:100;line-height:1;letter-spacing:0;margin:16px 0">＋</div>`;
 }
 
+const API_BASE = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+
 async function saveExp(type, data){
   try{
     const tok = localStorage.getItem('token')||'';
-    // 用 text/plain + token在URL参数，避免触发CORS预检OPTIONS请求
     const payload = JSON.stringify({experiment_type:type, result:data,
       timestamp:new Date().toISOString()});
-    const res = await fetch('/api/experiments/result?token='+encodeURIComponent(tok),{
+    const res = await fetch(API_BASE+'/api/experiments/result?token='+encodeURIComponent(tok),{
       method:'POST',
       headers:{'Content-Type':'text/plain'},
       body: payload
