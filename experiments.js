@@ -74,49 +74,6 @@ function mkBar(title){
   </div>`;
 }
 
-// 在 experiments.js 文件开头添加这个样式（在 mkBar 函数之后）
-function ensureExpStyles() {
-  const style = document.createElement('style');
-  style.textContent = `
-    #experimentRunner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 2000;
-      background: #000;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    #experimentRunner.hidden {
-      display: none;
-    }
-    
-    #expContent {
-      flex: 1 1 0;
-      min-height: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-// 在 launchExperiment 函数开头调用
-function launchExperiment(type){
-  ensureExpStyles(); // 添加这行
-  
-  if(type === 'temperature'){ launchTempExp(); return; }
-  const runner = document.getElementById('experimentRunner');
-  runner.innerHTML = '';
-  runner.classList.remove('hidden');
-  // ... 其余代码
-}
-
 const wrap = inner =>
   `<div style="display:flex;flex-direction:column;align-items:center;
     padding:28px 20px 72px;min-height:100%;color:#fff">${inner}</div>`;
