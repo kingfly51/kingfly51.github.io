@@ -1,5 +1,7 @@
 // image-upload.js - 图片上传系统（头像上传）
 
+const _IU_API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+
 class ImageUpload {
   constructor() {
     this.maxSize = 5 * 1024 * 1024; // 5MB
@@ -170,12 +172,10 @@ class ImageUpload {
   async useDefaultAvatar(emoji) {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/profile`, {
+      const apiBase = typeof API_URL !== 'undefined' ? API_URL : _IU_API_URL;
+      const response = await fetch(`${apiBase}/api/profile?token=${encodeURIComponent(token)}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ avatar: emoji })
       });
 
@@ -209,12 +209,10 @@ class ImageUpload {
       // 目前使用base64保存到profile中（演示用）
       
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/profile`, {
+      const apiBase = typeof API_URL !== 'undefined' ? API_URL : _IU_API_URL;
+      const response = await fetch(`${apiBase}/api/profile?token=${encodeURIComponent(token)}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ 
           avatar: this.currentImage  // 实际应用中应该上传到图片服务器
         })
