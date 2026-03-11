@@ -108,13 +108,26 @@ function fixCross(opacity='.5'){
 async function saveExp(type, data){
   try{
     const tok = localStorage.getItem('token')||'';
-    await fetch('/api/experiments/result',{
+    const res = await fetch('/api/experiments/result',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
-      body: JSON.stringify({experiment_type:type,result:data,
+      body: JSON.stringify({experiment_type:type, result:data,
         timestamp:new Date().toISOString()})
     });
-  } catch(e){}
+    if(!res.ok){
+      console.warn('[Exp] 保存失败 HTTP', res.status);
+    } else {
+      console.log('[Exp] 数据已保存:', type);
+    }
+  } catch(e){
+    console.warn('[Exp] 保存异常:', e);
+  }
+}
+
+/* 先保存再关闭，防止 async 请求被中断 */
+async function saveAndClose(type, data){
+  await saveExp(type, data);
+  closeExperiment();
 }
 
 
@@ -264,7 +277,7 @@ function initStroop(runner){
         效应量越大，说明词义对颜色判断干扰越强，需要更多认知资源来抑制阅读反应。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('stroop',{con_rt:${av(res.con)},inc_rt:${av(res.inc)},effect:${eff},con_acc:'${ac(res.con)}',inc_acc:'${ac(res.inc)}'});closeExperiment()`)}
+        `saveAndClose('stroop',{con_rt:${av(res.con)},inc_rt:${av(res.inc)},effect:${eff},con_acc:'${ac(res.con)}',inc_acc:'${ac(res.inc)}'})`)}
     `);
   }
   render();
@@ -472,7 +485,7 @@ function initGoNoGo(runner){
         d' > 2.0 表示辨别能力良好。误报率越低，抑制控制越强。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('gonogo',{hit_rate:${hrPct},fa_rate:${farPct},misses:${misses},avg_rt:${avgRt},dprime:'${dp}'});closeExperiment()`)}
+        `saveAndClose('gonogo',{hit_rate:${hrPct},fa_rate:${farPct},misses:${misses},avg_rt:${avgRt},dprime:'${dp}'})`)}
     `);
   }
   render();
@@ -645,7 +658,7 @@ function initNBack(runner){
         命中率越高、误报越少，工作记忆容量越好。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('nback',{hits:${hits},misses:${misses},fas:${fas},accuracy:'${acc}%',avg_rt:${avgRt}});closeExperiment()`,
+        `saveAndClose('nback',{hits:${hits},misses:${misses},fas:${fas},accuracy:'${acc}%',avg_rt:${avgRt}})`,
         '#818cf8')}
     `);
   }
@@ -804,7 +817,7 @@ function initFlanker(runner){
         Flanker 效应量反映<strong style="color:#fff">选择性注意</strong>强度——在干扰存在时锁定目标的能力。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('flanker',{con_rt:${av(res.con)},inc_rt:${av(res.inc)},effect:${eff}});closeExperiment()`,
+        `saveAndClose('flanker',{con_rt:${av(res.con)},inc_rt:${av(res.inc)},effect:${eff}})`,
         '#f59e0b')}
     `);
   }
@@ -946,7 +959,7 @@ function initSRT(runner){
         可作为其他范式 RT 的个体基线。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('srt',{avg:${avg},min:${mn},max:${mx},sd:${sd},n:${valid.length}});closeExperiment()`,
+        `saveAndClose('srt',{avg:${avg},min:${mn},max:${mx},sd:${sd},n:${valid.length}})`,
         '#a78bfa')}
     `);
   }
@@ -1128,7 +1141,7 @@ function initDotProbe(runner){
         ${biasDir}。偏向分 > 0 说明注意更多朝向威胁侧，常见于焦虑倾向个体。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('dotprobe',{con_rt:${conRt},inc_rt:${incRt},bias:${bias}});closeExperiment()`,
+        `saveAndClose('dotprobe',{con_rt:${conRt},inc_rt:${incRt},bias:${bias}})`,
         '#34d399')}
     `);
   }
@@ -1344,7 +1357,7 @@ function initDigitSpan(runner){
         逆序广度略低。逆序更能反映工作记忆的主动操控能力。
       </div>
       ${bigBtn('保存并返回 →',
-        `saveExp('digitspan',{forward:${maxFwd},backward:${maxBwd},total:${maxFwd+maxBwd}});closeExperiment()`,
+        `saveAndClose('digitspan',{forward:${maxFwd},backward:${maxBwd},total:${maxFwd+maxBwd}})`,
         '#86efac')}
     `);
   }
