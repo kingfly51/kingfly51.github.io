@@ -1,7 +1,5 @@
 // data-visualization.js - 数据可视化系统（使用Chart.js）
 
-const _DV_API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
-
 class DataVisualization {
   constructor() {
     this.charts = {};
@@ -129,9 +127,10 @@ class DataVisualization {
   async fetchHealthData() {
     try {
       const token = localStorage.getItem('token');
-      const apiBase = typeof API_URL !== 'undefined' ? API_URL : _DV_API_URL;
-      const response = await fetch(`${apiBase}/api/health/records?token=${encodeURIComponent(token)}`, {
-        headers: { 'Content-Type': 'text/plain' }
+      const response = await fetch(`${API_URL}/api/health/records`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (response.ok) {

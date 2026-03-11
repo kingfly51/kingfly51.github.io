@@ -16,15 +16,18 @@ if (!token || !username) {
 // API请求封装
 // =======================================
 async function apiRequest(endpoint, options = {}) {
-  // 使用 text/plain + token参数，避免触发CORS OPTIONS预检（GitHub Pages → 阿里云FC）
-  const tok = localStorage.getItem('token') || token || '';
-  const sep = endpoint.includes('?') ? '&' : '?';
-  const url = `${API_URL}${endpoint}${sep}token=${encodeURIComponent(tok)}`;
+  const defaultOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { 'Content-Type': 'text/plain', ...(options.headers || {}) }
+      headers: { ...defaultOptions.headers, ...options.headers }
     });
 
     if (response.status === 401) {

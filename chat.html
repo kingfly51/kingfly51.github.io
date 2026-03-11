@@ -340,14 +340,18 @@
 
     // API请求
     async function apiRequest(endpoint, options = {}) {
-      // 使用 text/plain + token参数，避免触发CORS OPTIONS预检
-      const sep = endpoint.includes('?') ? '&' : '?';
-      const url = `${API_URL}${endpoint}${sep}token=${encodeURIComponent(token)}`;
+      const defaultOptions = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      };
 
       try {
-        const response = await fetch(url, {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+          ...defaultOptions,
           ...options,
-          headers: { 'Content-Type': 'text/plain', ...(options.headers || {}) }
+          headers: { ...defaultOptions.headers, ...options.headers }
         });
 
         if (response.status === 401) {

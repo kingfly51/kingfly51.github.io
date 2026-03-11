@@ -67,11 +67,16 @@ async function logPageView(page, duration) {
       duration: duration
     });
     
-    // 直接用 apiRequest（text/plain 不触发预检，比 sendBeacon + json 更可靠）
-    await apiRequest('/api/analytics/page-view', {
-      method: 'POST',
-      body: data
-    });
+    const blob = new Blob([data], { type: 'application/json' });
+    const sent = navigator.sendBeacon(`${API_URL}/api/analytics/page-view`, blob);
+    
+    if (!sent) {
+      // 如果 sendBeacon 失败，使用普通请求
+      await apiRequest('/api/analytics/page-view', {
+        method: 'POST',
+        body: data
+      });
+    }
     
     console.log('✅ 页面浏览已记录:', { page, duration });
   } catch (error) {
@@ -124,15 +129,18 @@ document.addEventListener('visibilitychange', () => {
 // API请求封装
 // =======================================
 async function apiRequest(endpoint, options = {}) {
-  // 使用 text/plain + token参数，避免触发CORS OPTIONS预检（GitHub Pages → 阿里云FC）
-  const tok = localStorage.getItem('token') || token || '';
-  const sep = endpoint.includes('?') ? '&' : '?';
-  const url = `${API_URL}${endpoint}${sep}token=${encodeURIComponent(tok)}`;
+  const defaultOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { 'Content-Type': 'text/plain', ...(options.headers || {}) }
+      headers: { ...defaultOptions.headers, ...options.headers }
     });
 
     if (response.status === 401) {
