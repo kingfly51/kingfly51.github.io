@@ -43,13 +43,14 @@ function launchExperiment(type){
   runner.innerHTML = '';
   runner.classList.remove('hidden');
   const dispatch = {
-    stroop:  initStroop,
-    gonogo:  initGoNoGo,
-    nback:   initNBack,
-    flanker: initFlanker,
-    srt:     initSRT,
-    dotprobe:initDotProbe,
+    stroop:   initStroop,
+    gonogo:   initGoNoGo,
+    nback:    initNBack,
+    flanker:  initFlanker,
+    srt:      initSRT,
+    dotprobe: initDotProbe,
     digitspan:initDigitSpan,
+    riat:     initRIAT,
   };
   if(dispatch[type]) dispatch[type](runner);
 }
@@ -1364,5 +1365,553 @@ function initDigitSpan(runner){
         '#86efac')}
     `);
   }
+  render();
+}
+
+
+/* ══════════════════════════════════════════════════
+   9. RI-IAT  休息不耐受内隐联结测验
+   设计依据：Greenwald et al. (2003) D-scoring；
+   Wang et al. (2025) Rest Intolerance Scale
+══════════════════════════════════════════════════ */
+function initRIAT(runner) {
+  runner.innerHTML = mkBar('RI-IAT 休息不耐受内隐联结') +
+    `<div id="expContent" style="background:#0a0a12;color:#fff;overflow-y:auto;min-height:calc(100vh - 44px)"></div>`;
+
+  /* ── 刺激材料（每类10词，已通过效价/词频匹配） ── */
+  const STIM = {
+    rest: ['发呆','午睡','散步','放空','闲逛','泡澡','刷剧','躺平','冥想','无所事事'],
+    work: ['加班','任务','截止日期','效率','产出','汇报','备考','绩效','赶工','指标'],
+    neg:  ['失败','懒惰','浪费','堕落','愧疚','落后','羞耻','无用','颓废','虚度'],
+    pos:  ['成功','勤奋','充实','上进','拼搏','优秀','自律','奋斗','积极','坚韧'],
+  };
+
+  /* ── 七阶段定义 ── */
+  // left/right 标签文字；catLeft/catRight 决定哪些词合法
+  const BLOCKS = [
+    { id:1, label:'类别辨别练习',         n:20, prac:true,
+      left:'休息',  right:'工作',
+      cats:['rest','work'] },
+    { id:2, label:'属性辨别练习',         n:20, prac:true,
+      left:'积极',  right:'消极',
+      cats:['pos','neg'] },
+    { id:3, label:'联合任务—练习（相容）', n:20, prac:true,
+      left:'休息 / 积极', right:'工作 / 消极',
+      cats:['rest','pos','work','neg'] },
+    { id:4, label:'联合任务—正式（相容）', n:40, prac:false,
+      left:'休息 / 积极', right:'工作 / 消极',
+      cats:['rest','pos','work','neg'] },
+    { id:5, label:'类别反转练习',         n:20, prac:true,
+      left:'工作',  right:'休息',
+      cats:['rest','work'] },
+    { id:6, label:'联合任务—练习（不相容）',n:20, prac:true,
+      left:'工作 / 积极', right:'休息 / 消极',
+      cats:['rest','pos','work','neg'] },
+    { id:7, label:'联合任务—正式（不相容）',n:40, prac:false,
+      left:'工作 / 积极', right:'休息 / 消极',
+      cats:['rest','pos','work','neg'] },
+  ];
+
+  /* 哪个分类 → 正确键 */
+  function correctKey(blk, cat) {
+    if (blk.id === 1 || blk.id === 2) {
+      if (cat === 'rest' || cat === 'pos') return 'left';
+      return 'right';
+    }
+    if (blk.id === 5) {
+      if (cat === 'work') return 'left';
+      return 'right';
+    }
+    // 联合块
+    if (blk.id === 3 || blk.id === 4) {
+      // left: rest+pos   right: work+neg
+      if (cat === 'rest' || cat === 'pos') return 'left';
+      return 'right';
+    }
+    // blk 6 & 7: left: work+pos   right: rest+neg
+    if (cat === 'work' || cat === 'pos') return 'left';
+    return 'right';
+  }
+
+  /* 生成一个 block 的试次列表 */
+  function makeTrials(blk) {
+    const pool = [];
+    blk.cats.forEach(cat => {
+      STIM[cat].forEach(w => pool.push({ word: w, cat }));
+    });
+    // 随机抽取 n 个（允许重复）
+    const trials = [];
+    for (let i = 0; i < blk.n; i++) {
+      const item = pool[~~(Math.random() * pool.length)];
+      trials.push({ ...item, correct: correctKey(blk, item.cat) });
+    }
+    return trials;
+  }
+
+  /* ── 状态 ── */
+  let blkIdx = 0;        // 当前 block 下标 (0–6)
+  let trialIdx = 0;
+  let curTrials = [];
+  let curErrors = 0;     // 当前 trial 错误次数（需纠正）
+  let needCorrect = false;
+  let t0 = 0;
+  let rtBuf = [];        // 当前 trial 累计耗时（含纠错）
+  let tStart = 0;        // 当前 trial 开始时刻
+
+  // 正式块数据存储: {rt, err}[]
+  const DATA = { compat: [], incompat: [] };
+
+  let phase = 'welcome';
+  const C = () => document.getElementById('expContent');
+
+  /* ── 颜色配置 ── */
+  const COL = {
+    rest: '#60a5fa',   // 蓝
+    pos:  '#4ade80',   // 绿
+    work: '#fb923c',   // 橙
+    neg:  '#f87171',   // 红
+    left: '#60a5fa',
+    right:'#f87171',
+  };
+  const ACCENT = '#c084fc';  // 紫色主题
+
+  /* ══ 渲染入口 ══ */
+  function render() {
+    if (phase === 'welcome')    showWelcome();
+    else if (phase === 'blockIntro') showBlockIntro();
+    else if (phase === 'trial')  showTrial();
+    else if (phase === 'blockDone') showBlockDone();
+    else if (phase === 'result') showResult();
+  }
+
+  /* ══ 欢迎页 ══ */
+  function showWelcome() {
+    setPBar(0, 1);
+    C().innerHTML = wrap(`
+      <div style="font-size:26px;font-weight:900;margin-bottom:4px;
+        background:linear-gradient(135deg,#c084fc,#818cf8);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent">
+        RI-IAT
+      </div>
+      <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,.85);margin-bottom:4px">
+        休息不耐受内隐联结测验
+      </div>
+      <div style="color:rgba(255,255,255,.4);font-size:12px;margin-bottom:24px">
+        内隐态度 · 自动联结强度
+      </div>
+      ${cardBox(`
+        <div style="font-size:13px;line-height:1.95;color:rgba(255,255,255,.78)">
+          本测验通过<strong style="color:${ACCENT}">按键反应速度</strong>，
+          揭示你在潜意识层面是否将「休息」与「负面」自动绑定。<br><br>
+          屏幕中央会出现一个词，根据顶部的分类标签，<br>
+          按 <strong style="color:${COL.left}">左侧 E 键</strong>（或点击左区域）或
+          <strong style="color:${COL.right}">右侧 I 键</strong>（或点击右区域）。<br><br>
+          答错会出现红色 ✗，须<strong style="color:#fbbf24">纠正后</strong>才能继续。<br>
+          <span style="color:rgba(255,255,255,.45);font-size:12px">
+            共 7 个阶段，约 8–10 分钟，请在安静环境中完成。
+          </span>
+        </div>
+      `)}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:320px;
+        width:100%;margin-bottom:20px">
+        <div style="height:48px;border-radius:12px;border:1.5px solid ${COL.left}66;
+          color:${COL.left};background:rgba(96,165,250,.06);
+          display:flex;align-items:center;justify-content:center;
+          gap:8px;font-weight:700;font-size:14px">
+          E &nbsp;左键
+        </div>
+        <div style="height:48px;border-radius:12px;border:1.5px solid ${COL.right}66;
+          color:${COL.right};background:rgba(248,113,113,.06);
+          display:flex;align-items:center;justify-content:center;
+          gap:8px;font-weight:700;font-size:14px">
+          右键 &nbsp;I
+        </div>
+      </div>
+      ${bigBtn('开始测验 →', 'window.__riatNext()', ACCENT)}
+    `);
+    window.__riatNext = () => { phase = 'blockIntro'; render(); };
+  }
+
+  /* ══ Block 说明页 ══ */
+  function showBlockIntro() {
+    const blk = BLOCKS[blkIdx];
+    setPBar(blkIdx, BLOCKS.length);
+
+    // 渐变背景配色：相容块偏蓝，不相容块偏红
+    const isIncompat = blk.id >= 6;
+    const bgAccent = isIncompat ? 'rgba(248,113,113,.08)' : 'rgba(96,165,250,.08)';
+
+    C().innerHTML = wrap(`
+      <div style="font-size:12px;color:rgba(255,255,255,.3);letter-spacing:2px;margin-bottom:8px">
+        阶段 ${blkIdx + 1} / ${BLOCKS.length}
+      </div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:20px;color:${ACCENT}">
+        ${blk.label}
+      </div>
+
+      <div style="max-width:340px;width:100%;margin-bottom:20px">
+        <div style="font-size:11px;color:rgba(255,255,255,.38);letter-spacing:2px;
+          text-align:center;margin-bottom:10px">按键规则</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:rgba(96,165,250,.1);border:1.5px solid rgba(96,165,250,.4);
+            border-radius:12px;padding:14px 10px;text-align:center">
+            <div style="font-size:20px;font-weight:900;color:${COL.left};margin-bottom:6px">E</div>
+            <div style="font-size:13px;font-weight:700;color:${COL.left};line-height:1.5">
+              ${blk.left.replace(' / ', '<br>')}
+            </div>
+          </div>
+          <div style="background:rgba(248,113,113,.1);border:1.5px solid rgba(248,113,113,.4);
+            border-radius:12px;padding:14px 10px;text-align:center">
+            <div style="font-size:20px;font-weight:900;color:${COL.right};margin-bottom:6px">I</div>
+            <div style="font-size:13px;font-weight:700;color:${COL.right};line-height:1.5">
+              ${blk.right.replace(' / ', '<br>')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;color:rgba(255,255,255,.38);text-align:center;margin-bottom:20px">
+        ${blk.prac ? '练习阶段' : '<strong style="color:#fbbf24">正式记录阶段</strong>'} ·
+        共 ${blk.n} 题 · ${blk.prac ? '不计入得分' : '数据将被分析'}
+      </div>
+
+      ${bigBtn(blk.prac ? '开始练习 →' : '开始正式任务 →',
+        'window.__riatBeginBlock()', blk.prac ? '#94a3b8' : ACCENT)}
+    `);
+
+    window.__riatBeginBlock = () => {
+      curTrials = makeTrials(blk);
+      trialIdx = 0;
+      phase = 'trial';
+      render();
+    };
+  }
+
+  /* ══ 试次画面 ══ */
+  function showTrial() {
+    const blk = BLOCKS[blkIdx];
+    const tr = curTrials[trialIdx];
+    setPBar(blkIdx * 100 + trialIdx, BLOCKS.length * 100);
+
+    needCorrect = false;
+    tStart = Date.now();
+
+    C().innerHTML = `
+      <div style="position:fixed;inset:44px 0 0 0;display:flex;flex-direction:column;
+        user-select:none;-webkit-user-select:none;touch-action:manipulation">
+
+        <!-- 顶部分类标签栏 -->
+        <div style="display:flex;height:56px;flex-shrink:0">
+          <div id="iat_left" onclick="window.__riatTap('left')"
+            style="flex:1;background:rgba(96,165,250,.08);border-right:0.5px solid rgba(255,255,255,.06);
+            display:flex;align-items:center;justify-content:center;cursor:pointer;
+            transition:background .1s;padding:0 12px">
+            <div style="text-align:center">
+              <div style="font-size:11px;color:rgba(96,165,250,.6);letter-spacing:1px;margin-bottom:3px">E 键</div>
+              ${blk.left.split(' / ').map(s =>
+                `<div style="font-size:13px;font-weight:700;color:${COL.left};line-height:1.4">${s}</div>`
+              ).join('')}
+            </div>
+          </div>
+          <div id="iat_right" onclick="window.__riatTap('right')"
+            style="flex:1;background:rgba(248,113,113,.08);border-left:0.5px solid rgba(255,255,255,.06);
+            display:flex;align-items:center;justify-content:center;cursor:pointer;
+            transition:background .1s;padding:0 12px">
+            <div style="text-align:center">
+              <div style="font-size:11px;color:rgba(248,113,113,.6);letter-spacing:1px;margin-bottom:3px">I 键</div>
+              ${blk.right.split(' / ').map(s =>
+                `<div style="font-size:13px;font-weight:700;color:${COL.right};line-height:1.4">${s}</div>`
+              ).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- 中部刺激区 -->
+        <div style="flex:1;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;gap:0">
+
+          <div style="font-size:10px;color:rgba(255,255,255,.2);
+            margin-bottom:16px;letter-spacing:1.5px">
+            ${blk.prac ? '练习' : '正式'} ${trialIdx + 1} / ${blk.n}
+          </div>
+
+          ${fixCross('.28')}
+
+          <div id="iatWord"
+            style="font-size:clamp(32px,9vw,52px);font-weight:900;
+            letter-spacing:2px;margin:18px 0 8px;
+            color:#ffffff;transition:opacity .06s;min-height:64px;
+            display:flex;align-items:center;justify-content:center;opacity:0">
+            ${tr.word}
+          </div>
+
+          <div id="iatFb"
+            style="font-size:28px;min-height:36px;
+            display:flex;align-items:center;justify-content:center;
+            color:#ef4444;opacity:0;transition:opacity .1s">
+            ✗
+          </div>
+
+          <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:8px">
+            ${tr.cat === 'rest' || tr.cat === 'pos' ? '↙' : '↘'}
+            <span style="font-size:10px;color:rgba(255,255,255,.12);margin:0 6px">
+              ${tr.word} · ${tr.cat}
+            </span>
+          </div>
+        </div>
+
+        <!-- 底部点击区（补充触屏） -->
+        <div style="display:flex;height:72px;flex-shrink:0;
+          border-top:0.5px solid rgba(255,255,255,.05)">
+          <div onclick="window.__riatTap('left')"
+            style="flex:1;display:flex;align-items:center;justify-content:center;
+            cursor:pointer;color:${COL.left};font-size:22px;font-weight:900;
+            background:rgba(96,165,250,.04)">E</div>
+          <div onclick="window.__riatTap('right')"
+            style="flex:1;display:flex;align-items:center;justify-content:center;
+            cursor:pointer;color:${COL.right};font-size:22px;font-weight:900;
+            background:rgba(248,113,113,.04)">I</div>
+        </div>
+      </div>`;
+
+    // 注视点 400ms → 显示词
+    setTimeout(() => {
+      const el = document.getElementById('iatWord');
+      if (el) { el.style.opacity = '1'; t0 = Date.now(); }
+    }, 400);
+
+    /* 键盘监听 */
+    const keyHandler = (e) => {
+      if (e.key === 'e' || e.key === 'E') window.__riatTap('left');
+      if (e.key === 'i' || e.key === 'I') window.__riatTap('right');
+    };
+    document.addEventListener('keydown', keyHandler);
+    window.__riatKeyHandler = keyHandler;
+
+    window.__riatTap = (side) => {
+      const rt = Date.now() - t0;
+      const correct = tr.correct;
+
+      if (side !== correct) {
+        /* 错误：显示红色 ✗，需纠正 */
+        needCorrect = true;
+        const fb = document.getElementById('iatFb');
+        if (fb) { fb.style.opacity = '1'; }
+        // 高亮正确侧
+        const correctEl = document.getElementById('iat_' + correct);
+        if (correctEl) correctEl.style.background =
+          correct === 'left' ? 'rgba(96,165,250,.22)' : 'rgba(248,113,113,.22)';
+        return;
+      }
+
+      // 正确（含纠错后正确）
+      document.removeEventListener('keydown', window.__riatKeyHandler);
+      const totalRT = Date.now() - tStart;  // 包含纠错耗时
+      const hadError = needCorrect;
+
+      // 反馈闪绿
+      const side_el = document.getElementById('iat_' + side);
+      if (side_el) side_el.style.background =
+        side === 'left' ? 'rgba(96,165,250,.3)' : 'rgba(248,113,113,.3)';
+      const fb = document.getElementById('iatFb');
+      if (fb) { fb.style.opacity = '0'; }
+
+      // 正式 block 记录数据
+      if (!blk.prac) {
+        const bucket = (blk.id === 4) ? 'compat' : 'incompat';
+        DATA[bucket].push({ rt: totalRT, err: hadError ? 1 : 0 });
+      }
+
+      setTimeout(() => {
+        trialIdx++;
+        if (trialIdx >= curTrials.length) {
+          phase = (blkIdx < BLOCKS.length - 1) ? 'blockDone' : 'result';
+        } else {
+          phase = 'trial';
+        }
+        render();
+      }, 320);
+    };
+  }
+
+  /* ══ Block 完成过渡页 ══ */
+  function showBlockDone() {
+    blkIdx++;
+    const blk = BLOCKS[blkIdx];
+    setPBar(blkIdx, BLOCKS.length);
+
+    // 是否进入联合不相容块（最难的转换）
+    const isKeySwitch = blkIdx === 4;  // 阶段5：类别键反转
+    const isCompatDone = blkIdx === 4; // 相容正式阶段结束
+
+    C().innerHTML = wrap(`
+      <div style="text-align:center;padding:24px 0">
+        <div style="font-size:48px;margin-bottom:14px">
+          ${isCompatDone ? '🔄' : '✓'}
+        </div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:10px;
+          color:${isCompatDone ? '#fbbf24' : '#4ade80'}">
+          阶段 ${blkIdx} 完成
+        </div>
+        ${isKeySwitch ? `
+          <p style="color:rgba(255,255,255,.6);font-size:13px;line-height:1.7;
+            max-width:280px;margin:0 auto 6px">
+            ⚠️ 注意：接下来<strong style="color:#fbbf24">按键规则发生变化</strong>，<br>
+            请认真阅读下一阶段的规则。
+          </p>
+        ` : `
+          <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:6px">
+            继续下一阶段
+          </p>
+        `}
+        <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:28px">
+          已完成 ${blkIdx} / ${BLOCKS.length} 阶段
+        </div>
+        ${bigBtn('继续 →', 'window.__riatContinue()',
+          isKeySwitch ? '#fbbf24' : ACCENT)}
+      </div>
+    `);
+    window.__riatContinue = () => { phase = 'blockIntro'; render(); };
+  }
+
+  /* ══ 结果页（D-scoring） ══ */
+  function showResult() {
+    setPBar(1, 1);
+    document.removeEventListener('keydown', window.__riatKeyHandler);
+
+    /* D-score 计算（Greenwald et al., 2003）
+       D = (M_incompat − M_compat) / SD_pooled
+       排除 RT < 400ms（预期按键）和 RT > 10000ms
+       错误 trial 的 RT 替换为该 block 均值 + 600ms */
+    function dScore(compat, incompat) {
+      if (!compat.length || !incompat.length) return null;
+
+      function clean(arr) {
+        return arr.filter(d => d.rt >= 400 && d.rt <= 10000);
+      }
+      function impute(arr, blockMean) {
+        return arr.map(d => d.err ? { ...d, rt: blockMean + 600 } : d);
+      }
+
+      const c0 = clean(compat);
+      const i0 = clean(incompat);
+      const cMean0 = c0.reduce((s, d) => s + d.rt, 0) / (c0.length || 1);
+      const iMean0 = i0.reduce((s, d) => s + d.rt, 0) / (i0.length || 1);
+      const c1 = impute(c0, cMean0);
+      const i1 = impute(i0, iMean0);
+
+      const cM = c1.reduce((s, d) => s + d.rt, 0) / (c1.length || 1);
+      const iM = i1.reduce((s, d) => s + d.rt, 0) / (i1.length || 1);
+      const all = [...c1, ...i1].map(d => d.rt);
+      const pooledSD = Math.sqrt(all.reduce((s, x) => s + (x - (all.reduce((a,b)=>a+b,0)/all.length))**2, 0) / all.length);
+      if (!pooledSD) return null;
+      return (iM - cM) / pooledSD;
+    }
+
+    const D = dScore(DATA.compat, DATA.incompat);
+    const Dval = D !== null ? D.toFixed(3) : '--';
+    const Dn   = D !== null ? parseFloat(D.toFixed(3)) : null;
+
+    /* 错误率 */
+    const errC = DATA.compat.length   ? (DATA.compat.filter(d=>d.err).length   / DATA.compat.length   * 100).toFixed(1)  : '--';
+    const errI = DATA.incompat.length ? (DATA.incompat.filter(d=>d.err).length / DATA.incompat.length * 100).toFixed(1) : '--';
+    const errDelta = (errC !== '--' && errI !== '--') ? (parseFloat(errI) - parseFloat(errC)).toFixed(1) : '--';
+
+    /* 均 RT */
+    const avRT = arr => arr.length ? Math.round(arr.filter(d=>d.rt>=400&&d.rt<=10000).reduce((s,d)=>s+d.rt,0)/(arr.filter(d=>d.rt>=400&&d.rt<=10000).length||1)) : '--';
+    const cRT  = avRT(DATA.compat);
+    const iRT  = avRT(DATA.incompat);
+
+    /* 解读 */
+    let interp = '', interpColor = '#94a3b8';
+    if (Dn !== null) {
+      if (Dn >= 0.65) { interp = '强烈的「休息—负性」内隐联结，休息不耐受倾向显著'; interpColor = '#f87171'; }
+      else if (Dn >= 0.35) { interp = '中等程度内隐联结，可能存在一定休息不耐受倾向'; interpColor = '#fbbf24'; }
+      else if (Dn >= 0.15) { interp = '轻微内隐联结，与一般人群水平接近'; interpColor = '#a3e635'; }
+      else if (Dn >= -0.15) { interp = '无明显内隐联结，休息与负性未显著绑定'; interpColor = '#4ade80'; }
+      else { interp = '负向联结：倾向将工作与负性绑定，休息联结偏积极'; interpColor = '#60a5fa'; }
+    }
+
+    // D 值进度条宽度（映射到 -1~1 → 0~100%，中心=50%）
+    const barPct = Dn !== null ? Math.min(100, Math.max(0, (Dn + 1) / 2 * 100)) : 50;
+
+    C().innerHTML = wrap(`
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">测验完成 🎉</div>
+      <div style="color:rgba(255,255,255,.4);font-size:13px;margin-bottom:20px">RI-IAT · 内隐联结结果</div>
+
+      <!-- D 值展示卡 -->
+      <div style="background:rgba(192,132,252,.07);border:1.5px solid rgba(192,132,252,.25);
+        border-radius:16px;padding:20px;max-width:340px;width:100%;margin-bottom:16px">
+
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:11px;color:rgba(255,255,255,.4);letter-spacing:2px;margin-bottom:6px">
+            IAT D 值
+          </div>
+          <div style="font-size:54px;font-weight:900;
+            background:linear-gradient(135deg,${interpColor},${ACCENT});
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent">
+            ${Dval}
+          </div>
+          <div style="font-size:12px;color:${interpColor};margin-top:6px;
+            line-height:1.5;max-width:260px;margin:6px auto 0">
+            ${interp}
+          </div>
+        </div>
+
+        <!-- D 值刻度条 -->
+        <div style="margin:14px 0 6px">
+          <div style="display:flex;justify-content:space-between;
+            font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px">
+            <span>−1.0<br>工作偏正</span>
+            <span style="text-align:center">0<br>中性</span>
+            <span style="text-align:right">+1.0<br>休息偏负</span>
+          </div>
+          <div style="height:8px;border-radius:4px;background:rgba(255,255,255,.08);
+            position:relative;overflow:visible">
+            <!-- 渐变轨道 -->
+            <div style="position:absolute;inset:0;border-radius:4px;
+              background:linear-gradient(90deg,#60a5fa 0%,rgba(255,255,255,.1) 50%,#f87171 100%)">
+            </div>
+            <!-- 指针 -->
+            <div style="position:absolute;top:50%;left:${barPct}%;
+              transform:translate(-50%,-50%);
+              width:14px;height:14px;border-radius:50%;
+              background:${interpColor};border:2px solid #0a0a12;
+              box-shadow:0 0 8px ${interpColor}88;z-index:2">
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px;color:rgba(255,255,255,.25);text-align:center;margin-top:8px">
+          参考界值：0.15 小效应 · 0.35 中效应 · 0.65 大效应（Nosek et al., 2007）
+        </div>
+      </div>
+
+      <!-- 详细指标卡 -->
+      ${cardBox(`
+        ${resultRow('相容块 均RT',   cRT + ' ms',   '#60a5fa')}
+        ${resultRow('不相容块 均RT', iRT + ' ms',   '#f87171')}
+        ${resultRow('RT 差值 (ΔRT)', (cRT !== '--' && iRT !== '--' ? (iRT - cRT) + ' ms' : '--'), '#fbbf24')}
+        ${resultRow('相容块 错误率', errC + ' %',   '#60a5fa')}
+        ${resultRow('不相容块 错误率', errI + ' %', '#f87171')}
+        ${resultRow('ΔError',        (errDelta !== '--' ? (parseFloat(errDelta) >= 0 ? '+' : '') + errDelta + ' %' : '--'), '#c084fc')}
+      `)}
+
+      <div style="font-size:12px;color:rgba(255,255,255,.38);line-height:1.9;
+        max-width:340px;text-align:center;margin-bottom:22px">
+        D 值越高表示「休息—负性」内隐联结越强，<br>
+        即越在潜意识层面认为休息是不好的。<br>
+        <span style="color:rgba(255,255,255,.25)">
+          本结果仅供参考，不构成临床诊断依据。
+        </span>
+      </div>
+
+      ${bigBtn('保存并返回 →',
+        `saveAndClose('riat',{D:${Dval},compat_rt:${cRT},incompat_rt:${iRT},err_compat:${errC},err_incompat:${errI},err_delta:${errDelta}})`,
+        ACCENT)}
+    `);
+  }
+
   render();
 }
