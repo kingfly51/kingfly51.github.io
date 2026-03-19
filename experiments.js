@@ -1370,220 +1370,112 @@ function initDigitSpan(runner){
 
 
 /* ══════════════════════════════════════════════════
-   SC-IAT  休息—道德联结内隐测验  v2
+   SC-IAT  休息—道德威胁单类内隐联结测验  v2
    ──────────────────────────────────────────────────
-   构念定义：
-     测量「休息」与「道德威胁情绪（羞耻/愧疚）」
-     vs「道德正向情绪（自豪/坦荡）」的绝对联结强度。
-     对应 Koo (2023) leisure guilt 构念。
-
-   D 值方向（修正）：
-     相容块  = 休息 ＋ 道德威胁 共享同侧
-     不相容块 = 休息 ＋ 道德正向 共享同侧
-     D = (M_不相容 − M_相容) / SD_合并（样本 SD，N-1）
-     D > 0 → 休息—道德威胁联结强 → leisure guilt 高
-     D < 0 → 休息—道德正向联结强 → leisure guilt 低
-
-   计分算法（仅正确试次）：
-     步骤 1：仅保留正确试次（err = 0），错误试次直接排除
-     步骤 2：排除 RT < 200 ms（预判/误触）
-     步骤 3：排除 RT > 2000 ms（走神/中断）
-     步骤 4：各正式 block 计算正确有效试次均值 cM / iM
-     步骤 5：合并两 block 正确有效 RT，计算样本 SD（N-1）
-     步骤 6：D = (iM − cM) / SD
-
-   注视点设计（v2 修订）：
-     注视点（＋）与刺激词绝对定位叠放在同一坐标。
-     注视点呈现 400 ms 后 opacity→0，词语在原位 opacity→1。
-     被试视线无需移动，注视点真正起到聚焦作用。
-
-   Counterbalancing：
-     ORDER A：先相容（休息＋道德威胁→左）
-     ORDER B：先不相容（休息＋道德正向→左）
-     启动时 Math.random() 随机分配，写入 payload
-
-   数据质量控制：
-     · 仅检查当前 block 错误率（修复：用 block_id 过滤）
-     · 当前 block 错误率 > 30% → 中断，强制重做
-     · 正式 block 有效正确试次 < 30 → 结果页警告
-     · RT < 200 ms 占正式试次比 > 10% → speed flag
-
-   词表说明：
-     当前词表为初步筛选版，正式施测前需对道德威胁词与
-     道德正向词做效价（7点）与唤醒度（7点）独立评定，
-     配对 t 检验确认唤醒度无显著差异（p > .05）。
-     候选词库参见 word_pool.txt。
+   基于原版（15:57）最小改动：
+   [改动1] D 值方向修正：
+     D = (M_不相容 − M_相容) / SD_合并
+     D > 0 → 不相容块更慢 → 休息—道德威胁联结强 → leisure guilt 高
+   [改动2] 计分算法：去除错误试次，仅用正确试次计算均值
+     不再做错误惩罚（+600ms），直接排除 err=1 的试次
+   [改动3] RT 清理窗口：200–2000 ms（原版 150–1500 ms）
+   [改动4] 词表替换（见下方 STIM）
+   [改动5] 错误率检查修复：仅检查当前 block，用 block_id 过滤
+   [改动6] 新增被试 ID、开始时间戳、知情同意页
+   ──────────────────────────────────────────────────
+   未改动：整体结构、渲染逻辑、Counterbalancing、
+           Block定义、试次生成、UI风格、宿主接口
 ══════════════════════════════════════════════════ */
 function initSCIAT(runner) {
-
-  /* ── 宿主注入样式（仅注入一次）─────────────────── */
-  if (!document.getElementById('sciat-style')) {
-    const st = document.createElement('style');
-    st.id = 'sciat-style';
-    st.textContent = `
-      /* 试次全屏覆盖层 */
-      #sciat-trial-screen {
-        position: fixed; inset: 44px 0 0 0;
-        display: flex; flex-direction: column;
-        background: #07070f;
-        user-select: none; -webkit-user-select: none;
-        touch-action: manipulation;
-      }
-      /* 顶部类别栏 */
-      #sciat-cat-bar {
-        display: flex; height: 60px; flex-shrink: 0;
-      }
-      .sciat-cat-side {
-        flex: 1; display: flex; align-items: center;
-        justify-content: center; cursor: pointer;
-        padding: 0 10px; transition: background .1s;
-      }
-      .sciat-cat-side.left  { border-right: 0.5px solid rgba(255,255,255,.06); }
-      .sciat-cat-side .sciat-cat-inner { text-align: center; }
-      .sciat-cat-key   { font-size: 10px; letter-spacing: 1px; margin-bottom: 3px; }
-      .sciat-cat-label { font-size: 13px; font-weight: 700; line-height: 1.4; }
-      .sciat-cat-side.left  .sciat-cat-key   { color: rgba(96,165,250,.55); }
-      .sciat-cat-side.left  .sciat-cat-label { color: #60a5fa; }
-      .sciat-cat-side.right .sciat-cat-key   { color: rgba(248,113,113,.55); }
-      .sciat-cat-side.right .sciat-cat-label { color: #f87171; }
-      .sciat-cat-side.left  { background: rgba(96,165,250,.07); }
-      .sciat-cat-side.right { background: rgba(248,113,113,.07); }
-      /* 刺激中区 */
-      #sciat-stim-area {
-        flex: 1; display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-      }
-      #sciat-trial-counter {
-        font-size: 10px; color: rgba(255,255,255,.22);
-        letter-spacing: 1.5px; margin-bottom: 20px; min-height: 16px;
-      }
-      /*
-        注视点与词语叠放容器：
-        两者均绝对定位于同一位置，通过 opacity 切换。
-        注视点消失时词语在原位出现，被试视线无需移动。
-      */
-      #sciat-stim-stage {
-        position: relative;
-        width: 320px; height: 80px;
-        display: flex; align-items: center; justify-content: center;
-      }
-      #sciat-fix {
-        position: absolute; inset: 0;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 32px; color: rgba(255,255,255,.3);
-        transition: opacity .05s;
-      }
-      #sciat-word {
-        position: absolute; inset: 0;
-        display: flex; align-items: center; justify-content: center;
-        font-size: clamp(36px, 10vw, 52px);
-        font-weight: 900; letter-spacing: 3px; color: #ffffff;
-        opacity: 0; transition: opacity .05s;
-      }
-      /* 错误反馈位于刺激区下方固定位置，不影响刺激坐标 */
-      #sciat-fb {
-        margin-top: 24px;
-        font-size: 28px; min-height: 36px; color: #ef4444;
-        display: flex; align-items: center; justify-content: center;
-        opacity: 0; transition: opacity .08s;
-      }
-      /* 底部触控区 */
-      #sciat-touch-bar {
-        display: flex; height: 68px; flex-shrink: 0;
-        border-top: 0.5px solid rgba(255,255,255,.05);
-      }
-      .sciat-touch-btn {
-        flex: 1; display: flex; align-items: center;
-        justify-content: center; cursor: pointer;
-        font-size: 24px; font-weight: 900;
-      }
-      .sciat-touch-btn.left  { color: #60a5fa; background: rgba(96,165,250,.04); }
-      .sciat-touch-btn.right { color: #f87171; background: rgba(248,113,113,.04); }
-    `;
-    document.head.appendChild(st);
-  }
-
-  /* ── 宿主容器初始化（顶部进度条 + 内容区）──────── */
-  runner.innerHTML = mkBar('SC-IAT 休息—道德联结测验') +
-    `<div id="scExpContent" style="background:#07070f;color:#fff;
-       overflow-y:auto;flex:1 1 0;min-height:0"></div>`;
-
-  /* ── RT 窗口与质量控制常量 ─────────────────────── */
-  const RT_MIN      = 200;   /* 下限（ms）：低于此值视为预判，排除 */
-  const RT_MAX      = 2000;  /* 上限（ms）：高于此值视为走神，排除 */
-  const ERR_THRESH  = 0.30;  /* 单 block 错误率中断阈值 */
-  const MIN_VALID   = 30;    /* 每正式 block 最低有效正确试次 */
-  const SPEED_FRAC  = 0.10;  /* RT < RT_MIN 占比警告阈值 */
-  const FIX_DUR     = 400;   /* 注视点呈现时长（ms） */
-  const ISI_DUR     = 250;   /* 试次间隔：按键 → 下一注视点（ms） */
+  runner.innerHTML = mkBar('SC-IAT 休息—羞耻联结测验') +
+    `<div id="expContent" style="background:#0a0a12;color:#fff;
+      overflow-y:auto;flex:1 1 0;min-height:0"></div>`;
 
   /* ────────────────────────────────────────────────
-     刺激材料
-     道德威胁词：自我指向道德负性情绪（罪恶感/羞耻感/懊悔）
-       · 删除"鄙视"（他人指向），删除冗余的"羞愧"
-       · 建议正式施测前做效价/唤醒度独立评定（参见 word_pool.txt）
-     道德正向词：自我指向道德正性情绪（平静正向，非高激活励志词）
-       · 须与威胁词唤醒度匹配（配对 t 检验 p > .05）
-     休息词：中性日常休息活动
-       · 删除游戏/麻将/打牌（本身携带道德含义）
+     [改动4] 词表替换
+     道德威胁词：自我指向道德负性情绪
+       · 删除"鄙视"（他人指向），补充"羞惭/自惭/愧色"
+       · 覆盖罪恶感（负罪/愧疚/内疚）、羞耻感（羞耻/惭愧/羞惭）、
+         懊悔（悔恨/懊悔/自责）三个次类别
+     道德正向词：自我指向道德正性情绪
+       · 删除高激活励志词（崇高/奉献/无私），改用平静正向词
+       · 重点：唤醒度须与威胁词匹配，正式施测前需独立评定
+     休息词：删除"游戏/麻将/打牌"（本身携带道德含义），
+       替换为更中性的休息行为词
   ──────────────────────────────────────────────── */
   const STIM = {
-    threat_prac:   ['悔过','愧对','失格','心虚','亏欠','惭色','自责','赎罪'],
+    /* 道德威胁（练习8，正式10，严格不重叠） */
+    threat_prac:   ['悔过','愧对','失格','心虚','亏欠','惭色','赎罪','歉疚'],
     threat_formal: ['羞耻','惭愧','负罪','悔恨','内疚','懊悔','愧疚','自惭','愧色','羞惭'],
 
+    /* 道德正向（练习8，正式10，严格不重叠）
+       注：正式施测前须对两组词做效价/唤醒度独立评定，
+       配对 t 检验确认唤醒度无显著差异（p > .05） */
     virtue_prac:   ['无愧','心安','坦然','清白','踏实','自在','释怀','心平'],
     virtue_formal: ['自豪','坦荡','无愧','心安','正直','清白','踏实','释然','坦然','无憾'],
 
-    rest_prac:     ['赖床','打盹','歇息','放空','闲逛','假寐','晒太阳','踱步'],
+    /* 休息词（练习8，正式10，严格不重叠）
+       删除游戏/麻将/打牌，替换为中性休息活动 */
+    rest_prac:     ['赖床','打盹','歇息','放空','闲逛','假寐','踱步','晒太阳'],
     rest_formal:   ['散步','泡澡','懒觉','午睡','放松','观影','发呆','闲坐','赏景','养神'],
   };
 
   /* ────────────────────────────────────────────────
-     Counterbalancing（组间随机分配）
-       ORDER A：先相容（休息＋道德威胁→左 E 键）
-       ORDER B：先不相容（休息＋道德正向→左 E 键）
+     Counterbalancing（组间随机分配）—— 原版不变
+       ORDER A：先相容（休息＋道德威胁→左）
+       ORDER B：先不相容（休息＋道德正向→左）
   ──────────────────────────────────────────────── */
   const ORDER = Math.random() < 0.5 ? 'A' : 'B';
 
-  function makeBlocks(order) {
-    const compat = {
-      type: 'compat',
-      leftLbl:  '休息 / 道德威胁', rightLbl: '道德正向',
-      leftCats: ['rest','threat'],  rightCats: ['virtue'],
-    };
-    const incompat = {
-      type: 'incompat',
-      leftLbl:  '休息 / 道德正向', rightLbl: '道德威胁',
-      leftCats: ['rest','virtue'],  rightCats: ['threat'],
-    };
-    const first  = order === 'A' ? compat   : incompat;
-    const second = order === 'A' ? incompat : compat;
+  /* [改动6] 被试 ID 与开始时间戳 */
+  const SUBJECT_ID = 'sub_' + Date.now().toString(36) +
+                     '_' + Math.random().toString(36).slice(2, 6);
+  const START_TIME = Date.now();
 
-    /* Block 1 属性辨别练习：标签与第一联合任务同向，降低切换负荷 */
-    const attrBlock = {
-      id: 1, label: '属性辨别练习', n: 24, prac: true, type: 'attr',
-      leftLbl:   order === 'A' ? '道德威胁' : '道德正向',
-      rightLbl:  order === 'A' ? '道德正向' : '道德威胁',
-      leftCats:  order === 'A' ? ['threat']  : ['virtue'],
-      rightCats: order === 'A' ? ['virtue']  : ['threat'],
-    };
+  function makeBlocks(order) {
+    const first = order === 'A'
+      ? { type:'compat',   leftLbl:'休息 / 道德威胁', rightLbl:'道德正向',
+          leftCats:['rest','threat'], rightCats:['virtue'] }
+      : { type:'incompat', leftLbl:'休息 / 道德正向', rightLbl:'道德威胁',
+          leftCats:['rest','virtue'], rightCats:['threat'] };
+    const second = order === 'A'
+      ? { type:'incompat', leftLbl:'休息 / 道德正向', rightLbl:'道德威胁',
+          leftCats:['rest','virtue'], rightCats:['threat'] }
+      : { type:'compat',   leftLbl:'休息 / 道德威胁', rightLbl:'道德正向',
+          leftCats:['rest','threat'], rightCats:['virtue'] };
+
+    const attrLeftCats  = order === 'A' ? ['threat'] : ['virtue'];
+    const attrRightCats = order === 'A' ? ['virtue'] : ['threat'];
+    const attrLeftLbl   = order === 'A' ? '道德威胁' : '道德正向';
+    const attrRightLbl  = order === 'A' ? '道德正向' : '道德威胁';
 
     return [
-      attrBlock,
+      { id:1, label:'属性辨别练习',
+        n:24, prac:true, type:'attr',
+        leftLbl:attrLeftLbl, rightLbl:attrRightLbl,
+        leftCats:attrLeftCats, rightCats:attrRightCats },
       { id:2, label:`联合任务练习（${first.type==='compat'?'相容':'不相容'}）`,
-        n:24, prac:true,  ...first },
+        n:24, prac:true, type:first.type,
+        leftLbl:first.leftLbl, rightLbl:first.rightLbl,
+        leftCats:first.leftCats, rightCats:first.rightCats },
       { id:3, label:`联合任务正式（${first.type==='compat'?'相容':'不相容'}）`,
-        n:72, prac:false, ...first },
+        n:72, prac:false, type:first.type,
+        leftLbl:first.leftLbl, rightLbl:first.rightLbl,
+        leftCats:first.leftCats, rightCats:first.rightCats },
       { id:4, label:`联合任务练习（${second.type==='compat'?'相容':'不相容'}）`,
-        n:24, prac:true,  ...second },
+        n:24, prac:true, type:second.type,
+        leftLbl:second.leftLbl, rightLbl:second.rightLbl,
+        leftCats:second.leftCats, rightCats:second.rightCats },
       { id:5, label:`联合任务正式（${second.type==='compat'?'相容':'不相容'}）`,
-        n:72, prac:false, ...second },
+        n:72, prac:false, type:second.type,
+        leftLbl:second.leftLbl, rightLbl:second.rightLbl,
+        leftCats:second.leftCats, rightCats:second.rightCats },
     ];
   }
 
   const BLOCKS = makeBlocks(ORDER);
 
-  /* ── 工具函数 ──────────────────────────────────── */
+  /* ── 工具函数（原版不变）──────────────────────── */
   function shuffle(arr) {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -1593,25 +1485,23 @@ function initSCIAT(runner) {
     return a;
   }
 
-  function genId() {
-    return 'sub_' + Date.now().toString(36) +
-           '_' + Math.random().toString(36).slice(2, 6);
+  function getWords(cat, prac) {
+    const k = cat + (prac ? '_prac' : '_formal');
+    return [...(STIM[k] || STIM[cat + '_formal'] || [])];
   }
 
   function correctKey(blk, cat) {
     return blk.leftCats.includes(cat) ? 'left' : 'right';
   }
 
-  /* 试次生成：各类别独立循环队列 → 均衡轮转 → 整体打乱 */
   function makeTrials(blk) {
-    const cats    = [...new Set([...blk.leftCats, ...blk.rightCats])];
+    const cats = [...new Set([...blk.leftCats, ...blk.rightCats])];
     const queues  = {};
     const cursors = {};
     cats.forEach(cat => {
-      const suffix = blk.prac ? '_prac' : '_formal';
-      const pool   = [...(STIM[cat + suffix] || STIM[cat + '_formal'] || [])];
       let q = [];
-      while (q.length < blk.n) q = q.concat(shuffle(pool));
+      const words = getWords(cat, blk.prac);
+      while (q.length < blk.n) q = q.concat(shuffle(words));
       queues[cat]  = q;
       cursors[cat] = 0;
     });
@@ -1626,88 +1516,67 @@ function initSCIAT(runner) {
     return shuffle(trials);
   }
 
-  /* ── 状态 ──────────────────────────────────────── */
-  let blkIdx    = 0;
-  let trialIdx  = 0;
-  let curTrials = [];
-  let wordShown = false;
-  let hadError  = false;
-  let t0        = 0;
-  let fastCount   = 0;
-  let formalCount = 0;
-  const subjectId = genId();
-  const startTime = Date.now();
+  /* ── 状态（原版不变）──────────────────────────── */
+  let blkIdx = 0, trialIdx = 0, curTrials = [];
+  let needCorrect = false, wordShown = false, t0 = 0;
   const DATA = { compat: [], incompat: [] };
-  const PRAC_DATA  = [];   /* 练习数据（质量监控用） */
-  let phase = 'consent';
+  let fastCount = 0, totalFormal = 0;
+  let phase = 'consent'; /* [改动6] 初始 phase 改为 consent */
 
+  const C      = () => document.getElementById('expContent');
   const ACCENT = '#a78bfa';
   const COL_L  = '#60a5fa';
   const COL_R  = '#f87171';
 
-  const C = () => document.getElementById('scExpContent');
-
-  /* ── 进度条 ────────────────────────────────────── */
-  function setProg(done, total) {
-    setPBar(done, total);   /* 调用宿主 setPBar */
-  }
-
-  /* ══ 渲染入口 ══════════════════════════════════════ */
+  /* ══ 渲染入口（原版不变）══════════════════════════ */
   function render() {
-    const ts = document.getElementById('sciat-trial-screen');
-    if (phase === 'trial') {
-      if (ts) ts.style.display = 'flex';
-      showTrial();
-    } else {
-      if (ts) ts.style.display = 'none';
-      if      (phase === 'consent')    showConsent();
-      else if (phase === 'welcome')    showWelcome();
-      else if (phase === 'blockIntro') showBlockIntro();
-      else if (phase === 'blockDone')  showBlockDone();
-      else if (phase === 'errAbort')   showErrAbort();
-      else if (phase === 'result')     showResult();
-    }
+    if      (phase === 'consent')    showConsent();   /* [改动6] */
+    else if (phase === 'welcome')    showWelcome();
+    else if (phase === 'blockIntro') showBlockIntro();
+    else if (phase === 'trial')      showTrial();
+    else if (phase === 'blockDone')  showBlockDone();
+    else if (phase === 'errAbort')   showErrAbort();
+    else if (phase === 'result')     showResult();
   }
 
-  /* ══ 知情同意 ══════════════════════════════════════ */
+  /* ══ [改动6] 知情同意页 ════════════════════════════ */
   function showConsent() {
-    setProg(0, 1);
+    setPBar(0, 1);
     C().innerHTML = wrap(`
-      <div class="label" style="margin-bottom:10px;color:rgba(255,255,255,.4);
-        font-size:11px;letter-spacing:1.5px">参与须知</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35);
+        letter-spacing:1.5px;margin-bottom:10px">参与须知</div>
       <div style="font-size:18px;font-weight:700;margin-bottom:16px">
         知情同意书
       </div>
       ${cardBox(`
-        <div style="font-size:13px;line-height:1.9;color:rgba(255,255,255,.75)">
+        <div style="font-size:13px;line-height:1.95;color:rgba(255,255,255,.75)">
           本测验用于学术研究，测量您对「休息」的内隐道德情绪联结。<br>
           参与前请阅读以下说明：
-          <ul style="margin:10px 0 0 16px;padding:0">
-            <li>本测验全程约 <strong>10–12 分钟</strong>，共 5 个阶段。</li>
-            <li>仅记录<strong>按键反应时</strong>和错误率，不收集任何个人身份信息。</li>
-            <li>数据仅以匿名形式用于学术研究，不用于商业目的。</li>
-            <li>您可在<strong>任何时候关闭页面退出</strong>，无需说明理由。</li>
-            <li>结果仅供参考，<strong>不构成任何心理学或医学诊断</strong>。</li>
-            <li>建议在<strong>安静环境使用键盘</strong>完成，保证测量精度。</li>
-          </ul>
+          <br><br>
+          · 全程约 <strong>10–12 分钟</strong>，共 5 个阶段。<br>
+          · 仅记录<strong>按键反应时</strong>和错误率，不收集任何个人信息。<br>
+          · 数据仅以匿名形式用于学术研究，不用于商业目的。<br>
+          · 您可在<strong>任何时候关闭页面退出</strong>，无需说明理由。<br>
+          · 结果仅供参考，<strong>不构成任何心理学或医学诊断</strong>。<br>
+          · 建议在<strong>安静环境使用键盘</strong>完成，保证测量精度。
         </div>
       `)}
       <div style="font-size:12px;color:rgba(255,255,255,.35);margin-bottom:16px">
         点击「同意并继续」即表示您已阅读上述内容并自愿参与。
       </div>
-      ${bigBtn('同意并继续 →', "window.__scAct('welcome')", ACCENT)}
+      ${bigBtn('同意并继续 →', 'window.__scGo()', ACCENT)}
       <div style="height:10px"></div>
       ${bigBtn('不同意，退出', "alert('您可以关闭此页面退出测验。')", '#4b5563')}
     `);
-    window.__scAct = (p) => { phase = p; render(); };
+    window.__scGo = () => { phase = 'welcome'; render(); };
   }
 
-  /* ══ 欢迎页 ════════════════════════════════════════ */
+  /* ══ 欢迎页（原版，仅入口改为 consent）══════════════ */
   function showWelcome() {
-    setProg(0, 1);
+    setPBar(0, 1);
     C().innerHTML = wrap(`
       <div style="font-size:26px;font-weight:900;margin-bottom:4px;
-        background:linear-gradient(135deg,${ACCENT},#818cf8);
+        background:linear-gradient(135deg,#a78bfa,#818cf8);
         -webkit-background-clip:text;-webkit-text-fill-color:transparent">
         SC-IAT
       </div>
@@ -1721,13 +1590,13 @@ function initSCIAT(runner) {
       ${cardBox(`
         <div style="font-size:13px;line-height:2;color:rgba(255,255,255,.78)">
           本测验通过<strong style="color:${ACCENT}">按键速度</strong>，
-          测量您在潜意识层面对「休息」所触发的道德情绪倾向。<br><br>
+          测量你在潜意识层面对「休息」所触发的道德情绪倾向。<br><br>
           屏幕中央出现一个词，根据顶部标签<br>
           按 <strong style="color:${COL_L}">E 键（左）</strong> 或
           <strong style="color:${COL_R}">I 键（右）</strong>。<br><br>
           答错会显示红色 ✗，<strong style="color:#fbbf24">须按正确键纠正</strong>后才能继续。<br>
           <span style="color:rgba(255,255,255,.4);font-size:12px">
-            共 5 个阶段 · 约 10–12 分钟 · 请在安静环境使用键盘完成
+            共 5 个阶段 · 约 10–12 分钟 · 请在安静、不受打扰的环境完成
           </span>
         </div>
       `)}
@@ -1744,15 +1613,16 @@ function initSCIAT(runner) {
           display:flex;align-items:center;justify-content:center;
           font-weight:800;font-size:16px">右 &nbsp;→&nbsp; I</div>
       </div>
-      ${bigBtn('开始测验 →', "window.__scAct('blockIntro')", ACCENT)}
+      ${bigBtn('开始测验 →', 'window.__scGo()', ACCENT)}
     `);
+    window.__scGo = () => { phase = 'blockIntro'; render(); };
   }
 
-  /* ══ Block 说明页 ══════════════════════════════════ */
+  /* ══ Block 说明页（原版不变）══════════════════════ */
   function showBlockIntro() {
     const blk      = BLOCKS[blkIdx];
     const isSwitch = blkIdx === 3;
-    setProg(blkIdx, BLOCKS.length);
+    setPBar(blkIdx, BLOCKS.length);
 
     C().innerHTML = wrap(`
       <div style="font-size:11px;color:rgba(255,255,255,.3);
@@ -1801,8 +1671,8 @@ function initSCIAT(runner) {
       <div style="font-size:12px;color:rgba(255,255,255,.38);
         text-align:center;margin-bottom:20px">
         ${blk.prac
-          ? '练习阶段，数据不计入主分析'
-          : '<strong style="color:#fbbf24">正式阶段，反应时数据将被记录分析</strong>'}
+          ? '练习阶段，数据不计入分析'
+          : '<strong style="color:#fbbf24">正式阶段，数据将被记录分析</strong>'}
         &nbsp;·&nbsp; 共 ${blk.n} 题
       </div>
       ${bigBtn(
@@ -1820,198 +1690,201 @@ function initSCIAT(runner) {
     };
   }
 
-  /* ══ 试次画面 ══════════════════════════════════════
-     注视点与词语叠放在 #sciat-stim-stage 内，
-     两者绝对定位于同一位置，通过 opacity 切换：
-       t=0      注视点 opacity=1，词语 opacity=0
-       t=FIX_DUR 注视点 opacity=0，词语 opacity=1，RT 开始计时
-     被试视线始终停留在屏幕同一坐标。
+  /* ══ 试次画面（原版结构，修改注视点叠放逻辑）══════
+     [注视点修复]
+     原版注视点和词语是上下分开的两个元素，被试视线需移动。
+     修改为：注视点与词语用 position:absolute 叠放在同一位置，
+     注视点消失时词语在原位出现，被试视线无需移动。
   ══════════════════════════════════════════════════ */
   function showTrial() {
-    const blk     = BLOCKS[blkIdx];
-    const tr      = curTrials[trialIdx];
-    const isFormal = !blk.prac;
-
-    /* 进度条 */
-    const totalT = BLOCKS.reduce((s, b) => s + b.n, 0);
-    const doneT  = BLOCKS.slice(0, blkIdx).reduce((s, b) => s + b.n, 0) + trialIdx;
-    setProg(doneT, totalT);
+    const blk      = BLOCKS[blkIdx];
+    const tr       = curTrials[trialIdx];
+    const isFormel = !blk.prac;
+    setPBar(blkIdx * 100 + trialIdx, BLOCKS.length * 100);
 
     /* 移除上一试次残留的键盘监听 */
-    document.removeEventListener('keydown', window.__scKey);
+    document.removeEventListener('keydown', window.__scKeyHandler);
 
-    wordShown = false;
-    hadError  = false;
+    needCorrect = false;
+    wordShown   = false;
 
-    /* 构建全屏试次 DOM（首次创建，后续复用并更新内容） */
-    let ts = document.getElementById('sciat-trial-screen');
-    if (!ts) {
-      ts = document.createElement('div');
-      ts.id = 'sciat-trial-screen';
-      ts.innerHTML = `
-        <div id="sciat-cat-bar">
-          <div class="sciat-cat-side left" id="sciat-left"
-            onclick="window.__scTap('left')">
-            <div class="sciat-cat-inner">
-              <div class="sciat-cat-key">E 键</div>
-              <div class="sciat-cat-label" id="sciat-lbl-left">—</div>
+    C().innerHTML = `
+      <div style="position:fixed;inset:44px 0 0 0;display:flex;
+        flex-direction:column;user-select:none;
+        -webkit-user-select:none;touch-action:manipulation">
+
+        <!-- 顶部类别标签栏（原版不变） -->
+        <div style="display:flex;height:60px;flex-shrink:0">
+          <div id="sc_left" onclick="window.__scTap('left')"
+            style="flex:1;background:rgba(96,165,250,.07);
+            border-right:0.5px solid rgba(255,255,255,.06);
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;transition:background .1s;padding:0 10px">
+            <div style="text-align:center">
+              <div style="font-size:10px;color:rgba(96,165,250,.55);
+                letter-spacing:1px;margin-bottom:3px">E 键</div>
+              ${blk.leftLbl.split(' / ').map(s =>
+                `<div style="font-size:13px;font-weight:700;
+                  color:${COL_L};line-height:1.4">${s}</div>`
+              ).join('')}
             </div>
           </div>
-          <div class="sciat-cat-side right" id="sciat-right"
-            onclick="window.__scTap('right')">
-            <div class="sciat-cat-inner">
-              <div class="sciat-cat-key">I 键</div>
-              <div class="sciat-cat-label" id="sciat-lbl-right">—</div>
+          <div id="sc_right" onclick="window.__scTap('right')"
+            style="flex:1;background:rgba(248,113,113,.07);
+            border-left:0.5px solid rgba(255,255,255,.06);
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;transition:background .1s;padding:0 10px">
+            <div style="text-align:center">
+              <div style="font-size:10px;color:rgba(248,113,113,.55);
+                letter-spacing:1px;margin-bottom:3px">I 键</div>
+              ${blk.rightLbl.split(' / ').map(s =>
+                `<div style="font-size:13px;font-weight:700;
+                  color:${COL_R};line-height:1.4">${s}</div>`
+              ).join('')}
             </div>
           </div>
         </div>
-        <div id="sciat-stim-area">
-          <div id="sciat-trial-counter"></div>
-          <div id="sciat-stim-stage">
-            <div id="sciat-fix">＋</div>
-            <div id="sciat-word"></div>
+
+        <!-- 刺激中区 -->
+        <div style="flex:1;display:flex;flex-direction:column;
+          align-items:center;justify-content:center">
+
+          ${isFormel ? '' : `
+            <div style="font-size:10px;color:rgba(255,255,255,.22);
+              margin-bottom:14px;letter-spacing:1.5px">
+              练习 ${trialIdx + 1} / ${blk.n}
+            </div>`}
+
+          <!--
+            [注视点修复] 注视点与词语叠放在同一容器内，
+            均为 position:absolute，通过 opacity 切换。
+            注视点消失时词语在原位出现，RT 从该时刻起算。
+          -->
+          <div style="position:relative;width:320px;height:80px;
+            display:flex;align-items:center;justify-content:center">
+            <div id="scFix"
+              style="position:absolute;inset:0;
+              display:flex;align-items:center;justify-content:center;
+              font-size:32px;color:rgba(255,255,255,.3);
+              transition:opacity .05s;opacity:1">＋</div>
+            <div id="scWord"
+              style="position:absolute;inset:0;
+              display:flex;align-items:center;justify-content:center;
+              font-size:clamp(36px,10vw,52px);font-weight:900;
+              letter-spacing:3px;color:#ffffff;
+              transition:opacity .05s;opacity:0">${tr.word}</div>
           </div>
-          <div id="sciat-fb">✗ 请按正确键</div>
+
+          <!-- 错误反馈，位于刺激区下方 -->
+          <div id="scFb"
+            style="margin-top:24px;font-size:28px;min-height:36px;
+            color:#ef4444;opacity:0;transition:opacity .08s;
+            display:flex;align-items:center;justify-content:center">✗</div>
+
+          ${isFormel ? '' : `
+            <div style="font-size:10px;color:rgba(255,255,255,.15);
+              margin-top:12px">按 E 或 I 作答</div>`}
         </div>
-        <div id="sciat-touch-bar">
-          <div class="sciat-touch-btn left"
-            onclick="window.__scTap('left')">E</div>
-          <div class="sciat-touch-btn right"
-            onclick="window.__scTap('right')">I</div>
-        </div>`;
-      document.body.appendChild(ts);
-    }
-    ts.style.display = 'flex';
 
-    /* 更新类别标签 */
-    document.getElementById('sciat-lbl-left').innerHTML =
-      blk.leftLbl.split(' / ').join('<br>');
-    document.getElementById('sciat-lbl-right').innerHTML =
-      blk.rightLbl.split(' / ').join('<br>');
+        <!-- 底部触控区（原版不变） -->
+        <div style="display:flex;height:68px;flex-shrink:0;
+          border-top:0.5px solid rgba(255,255,255,.05)">
+          <div onclick="window.__scTap('left')"
+            style="flex:1;display:flex;align-items:center;
+            justify-content:center;cursor:pointer;
+            color:${COL_L};font-size:24px;font-weight:900;
+            background:rgba(96,165,250,.04)">E</div>
+          <div onclick="window.__scTap('right')"
+            style="flex:1;display:flex;align-items:center;
+            justify-content:center;cursor:pointer;
+            color:${COL_R};font-size:24px;font-weight:900;
+            background:rgba(248,113,113,.04)">I</div>
+        </div>
+      </div>`;
 
-    /* 计数器（仅练习阶段显示） */
-    document.getElementById('sciat-trial-counter').textContent =
-      isFormal ? '' : `练习 ${trialIdx + 1} / ${blk.n}`;
-
-    /* 重置刺激区：注视点可见，词语隐藏 */
-    const fixEl  = document.getElementById('sciat-fix');
-    const wordEl = document.getElementById('sciat-word');
-    const fbEl   = document.getElementById('sciat-fb');
-    fixEl.style.opacity  = '1';
-    wordEl.style.opacity = '0';
-    wordEl.textContent   = tr.word;
-    fbEl.style.opacity   = '0';
-
-    /* FIX_DUR ms 后：注视点消失，词语在原位出现，RT 开始计时 */
+    /* 注视点 400ms → 消失，词语在原位出现，RT 开始计时 */
     setTimeout(() => {
-      fixEl.style.opacity  = '0';
-      wordEl.style.opacity = '1';
+      const fixEl  = document.getElementById('scFix');
+      const wordEl = document.getElementById('scWord');
+      if (fixEl)  fixEl.style.opacity  = '0';
+      if (wordEl) wordEl.style.opacity = '1';
       t0        = Date.now();
       wordShown = true;
-    }, FIX_DUR);
+    }, 400);
 
-    /* 键盘监听（具名函数，确保可精确移除） */
-    window.__scKey = (e) => {
+    /* 键盘监听（具名函数，精确移除）*/
+    window.__scKeyHandler = function(e) {
       if (e.key === 'e' || e.key === 'E') window.__scTap('left');
       if (e.key === 'i' || e.key === 'I') window.__scTap('right');
     };
-    document.addEventListener('keydown', window.__scKey);
+    document.addEventListener('keydown', window.__scKeyHandler);
 
-    /* ── 响应处理 ── */
     window.__scTap = (side) => {
       if (!wordShown) return;
 
-      const rt = Date.now() - t0;
-
       if (side !== tr.correct) {
         /* 错误：显示反馈，等待纠正 */
-        hadError = true;
-        fbEl.style.opacity = '1';
-        const cEl = document.getElementById(
-          'sciat-' + (tr.correct === 'left' ? 'left' : 'right')
-        );
-        if (cEl) {
-          cEl.style.background = tr.correct === 'left'
-            ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
-          setTimeout(() => { cEl.style.background = ''; }, 200);
-        }
+        needCorrect = true;
+        const fb = document.getElementById('scFb');
+        if (fb) fb.style.opacity = '1';
+        const cel = document.getElementById('sc_' + tr.correct);
+        if (cel) cel.style.background = tr.correct === 'left'
+          ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
         return;
       }
 
       /* 正确（含纠错后） */
-      document.removeEventListener('keydown', window.__scKey);
-      fbEl.style.opacity = '0';
+      document.removeEventListener('keydown', window.__scKeyHandler);
+      const rt       = Date.now() - t0;
+      const hadError = needCorrect;
 
-      /* 记录数据 */
-      const entry = {
-        trial_n:     (isFormal ? DATA[blk.type] : PRAC_DATA).length + 1,
-        block_id:    blk.id,
-        block_type:  blk.type,
-        word:        tr.word,
-        cat:         tr.cat,
-        correct_key: tr.correct,
-        rt,
-        err:         hadError ? 1 : 0,
-        timestamp:   Date.now(),
-      };
+      const sel = document.getElementById('sc_' + side);
+      if (sel) sel.style.background = side === 'left'
+        ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
+      const fb = document.getElementById('scFb');
+      if (fb) fb.style.opacity = '0';
 
-      if (isFormal) {
-        DATA[blk.type].push(entry);
-        formalCount++;
-        if (rt < RT_MIN) fastCount++;
-      } else {
-        PRAC_DATA.push(entry);
+      /* 正式 block 写入数据（原版结构，去掉错误惩罚） */
+      if (!blk.prac) {
+        DATA[blk.type].push({
+          trial_n:  DATA[blk.type].length + 1,
+          block_id: blk.id,
+          word:     tr.word,
+          cat:      tr.cat,
+          correct:  tr.correct,
+          rt,
+          err:      hadError ? 1 : 0,
+        });
+        totalFormal++;
+        if (rt < 200) fastCount++;
       }
 
-      /* ISI_DUR ms → 下一试次 */
+      /* ISI 500ms → 下一试次（原版不变） */
       setTimeout(() => {
         trialIdx++;
         if (trialIdx >= curTrials.length) {
-          /* Block 结束：仅检查当前 block 错误率（修复：用 block_id 过滤） */
-          if (isFormal) {
-            const blkData  = DATA[blk.type].filter(d => d.block_id === blk.id);
-            const errRate  = blkData.filter(d => d.err).length / blkData.length;
-            if (errRate > ERR_THRESH) {
-              ts.style.display = 'none';
-              phase = 'errAbort';
-              render();
-              return;
-            }
+          /* [改动5] 错误率检查：仅过滤当前 block_id */
+          if (!blk.prac) {
+            const blkData = DATA[blk.type].filter(d => d.block_id === blk.id);
+            const errRate = blkData.filter(d => d.err).length / blkData.length;
+            if (errRate > 0.30) { phase = 'errAbort'; render(); return; }
           }
-          ts.style.display = 'none';
           phase = blkIdx < BLOCKS.length - 1 ? 'blockDone' : 'result';
         } else {
           phase = 'trial';
         }
         render();
-      }, ISI_DUR);
+      }, 500);
     };
   }
 
-  /* ══ Block 完成过渡 ════════════════════════════════ */
+  /* ══ Block 完成过渡（原版不变）════════════════════ */
   function showBlockDone() {
     blkIdx++;
     if (blkIdx >= BLOCKS.length) { phase = 'result'; render(); return; }
-
+    const blk      = BLOCKS[blkIdx];
     const isSwitch = blkIdx === 3;
-    setProg(blkIdx, BLOCKS.length);
-
-    /* 练习阶段质量提示（仅检查刚完成的 block） */
-    const prevBlk    = BLOCKS[blkIdx - 1];
-    const pracForBlk = PRAC_DATA.filter(d => d.block_id === prevBlk.id);
-    let qualNote = '';
-    if (pracForBlk.length > 0) {
-      const er = pracForBlk.filter(d => d.err).length / pracForBlk.length;
-      if (er > 0.35) qualNote = `
-        <div style="background:rgba(251,191,36,.1);
-          border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;max-width:320px;width:100%;
-          font-size:12px;color:#fbbf24;margin-bottom:14px;
-          text-align:center;line-height:1.7">
-          练习阶段错误率约 ${(er*100).toFixed(0)}%，略偏高。<br>
-          请认真阅读下一阶段规则后再作答。
-        </div>`;
-    }
+    setPBar(blkIdx, BLOCKS.length);
 
     C().innerHTML = wrap(`
       <div style="text-align:center;padding:28px 0">
@@ -2020,7 +1893,6 @@ function initSCIAT(runner) {
         <div style="font-size:19px;font-weight:800;margin-bottom:10px;
           color:${isSwitch ? '#fbbf24' : '#4ade80'}">
           阶段 ${blkIdx} 完成</div>
-        ${qualNote}
         ${isSwitch
           ? `<p style="color:rgba(255,255,255,.65);font-size:13px;
               line-height:1.7;max-width:280px;margin:0 auto 16px">
@@ -2030,18 +1902,15 @@ function initSCIAT(runner) {
         <div style="font-size:11px;color:rgba(255,255,255,.28);
           margin-bottom:28px;letter-spacing:1px">
           已完成 ${blkIdx} / ${BLOCKS.length} 阶段</div>
-        ${bigBtn(
-          '继续 →',
-          "window.__scAct('blockIntro')",
-          isSwitch ? '#fbbf24' : ACCENT
-        )}
+        ${bigBtn('继续 →', 'window.__scCont()', isSwitch ? '#fbbf24' : ACCENT)}
       </div>
     `);
+    window.__scCont = () => { phase = 'blockIntro'; render(); };
   }
 
-  /* ══ 高错误率中断 ══════════════════════════════════ */
+  /* ══ 高错误率中断（原版不变）══════════════════════ */
   function showErrAbort() {
-    setProg(0, 1);
+    setPBar(0, 1);
     C().innerHTML = wrap(`
       <div style="text-align:center;padding:28px 0">
         <div style="font-size:52px;margin-bottom:14px">⚠️</div>
@@ -2053,7 +1922,7 @@ function initSCIAT(runner) {
             不符合 SC-IAT 数据质量要求。<br><br>
             常见原因：<br>
             · 按键规则尚不熟悉，请重新阅读说明<br>
-            · 节奏过快，请适当放慢<br>
+            · 操作节奏过快，请适当放慢<br>
             · 环境干扰，请在安静处重新完成<br><br>
             <span style="color:rgba(255,255,255,.4);font-size:12px">
               重新开始后之前的数据将被清除。
@@ -2063,92 +1932,104 @@ function initSCIAT(runner) {
         ${bigBtn('重新开始测验 →', 'window.__scRestart()', '#f87171')}
       </div>
     `);
-
     window.__scRestart = () => {
-      DATA.compat   = [];
-      DATA.incompat = [];
-      PRAC_DATA.length = 0;
-      fastCount    = 0;
-      formalCount  = 0;
-      blkIdx       = 0;
-      trialIdx     = 0;
-      phase        = 'welcome';
+      DATA.compat = []; DATA.incompat = [];
+      fastCount = 0; totalFormal = 0;
+      blkIdx = 0; trialIdx = 0; phase = 'welcome';
       render();
     };
   }
 
   /* ══ 结果页 ════════════════════════════════════════
-     D 值计分（仅正确试次，RT 窗口 200–2000 ms）：
-
-     D = (M_不相容 − M_相容) / SD_合并
-       相容块   = DATA.compat
-       不相容块 = DATA.incompat
-
-     步骤：
-     1. 各 block 仅保留 err=0 且 RT ∈ [RT_MIN, RT_MAX] 的试次
-     2. 分别计算均值 cM（相容）、iM（不相容）
-     3. 合并有效试次 RT，计算样本 SD（N-1）
-     4. D = (iM − cM) / SD
+     [改动1] D 值方向修正：D = (M_不相容 − M_相容) / SD
+     [改动2] 计分：去除 err=1 试次，仅用正确试次
+     [改动3] RT 窗口：200–2000 ms
   ══════════════════════════════════════════════════ */
-  function calcD(compat, incompat) {
-    const valid = arr =>
-      arr.filter(d => d.err === 0 && d.rt >= RT_MIN && d.rt <= RT_MAX);
-    const cV = valid(compat);
-    const iV = valid(incompat);
+  function showResult() {
+    setPBar(1, 1);
 
-    if (cV.length < MIN_VALID || iV.length < MIN_VALID) {
-      return { d: null, flag: 'insufficient_valid',
+    /*
+      D 值计分（修正版）
+      ──────────────────────────────────────────────
+      [改动1] D = (M_不相容 − M_相容) / SD_合并
+        D > 0 → 不相容块更慢 → 休息—道德威胁联结强
+
+      [改动2] 仅用正确试次（err = 0），直接排除错误试次，
+        不做错误惩罚替换（不再 +600ms）
+
+      [改动3] RT 清理窗口：200–2000 ms
+        下限 200ms：低于此值为预判/误触
+        上限 2000ms：高于此值为走神（SC-IAT 单类范式
+          认知负荷高于标准 IAT，适当放宽上限）
+
+      步骤：
+        1. 各 block 仅保留 err=0 且 RT∈[200,2000] 的试次
+        2. 分别计算均值 cM（相容）、iM（不相容）
+        3. 合并有效试次 RT，计算样本 SD（N-1）
+        4. D = (iM − cM) / SD
+    */
+    function calcD(compat, incompat) {
+      if (!compat.length || !incompat.length)
+        return { d: null, flag: 'no_data' };
+
+      /* [改动2+3] 仅正确试次，RT 200–2000 ms */
+      const valid = arr =>
+        arr.filter(d => d.err === 0 && d.rt >= 200 && d.rt <= 2000);
+      const cV = valid(compat);
+      const iV = valid(incompat);
+
+      if (!cV.length || !iV.length)
+        return { d: null, flag: 'insufficient_correct' };
+
+      const mean = arr => arr.reduce((s, d) => s + d.rt, 0) / arr.length;
+      const cM   = mean(cV);
+      const iM   = mean(iV);
+
+      /* 样本 SD（N-1） */
+      const all  = [...cV, ...iV].map(d => d.rt);
+      const mu   = all.reduce((a, b) => a + b, 0) / all.length;
+      const sd   = Math.sqrt(
+        all.reduce((s, x) => s + (x - mu) ** 2, 0) / (all.length - 1)
+      );
+      if (!sd) return { d: null, flag: 'zero_sd' };
+
+      /* [改动1] D = (M_不相容 − M_相容) / SD */
+      return { d: (iM - cM) / sd, flag: null,
                cN: cV.length, iN: iV.length };
     }
-    const mean = arr => arr.reduce((s, d) => s + d.rt, 0) / arr.length;
-    const cM   = mean(cV);
-    const iM   = mean(iV);
-    const all  = [...cV, ...iV].map(d => d.rt);
-    const mu   = all.reduce((a, b) => a + b, 0) / all.length;
-    const sd   = Math.sqrt(
-      all.reduce((s, x) => s + (x - mu) ** 2, 0) / (all.length - 1)
-    );
-    if (sd < 1) return { d: null, flag: 'zero_sd',
-                         cN: cV.length, iN: iV.length };
-    return { d: (iM - cM) / sd, flag: null,
-             cN: cV.length, iN: iV.length, cM, iM, sd };
-  }
 
-  function showResult() {
-    setProg(1, 1);
+    /* 与 calcD 一致的辅助统计 */
+    function getValidCorrect(arr) {
+      return arr.filter(d => d.err === 0 && d.rt >= 200 && d.rt <= 2000);
+    }
 
-    const res   = calcD(DATA.compat, DATA.incompat);
-    const Dnum  = res.d !== null ? parseFloat(res.d.toFixed(3)) : null;
-    const Dstr  = Dnum !== null ? Dnum.toFixed(3) : '--';
+    const { d: D, flag: calcFlag,
+            cN: nValidC, iN: nValidI } = calcD(DATA.compat, DATA.incompat);
+    const Dnum = D !== null ? parseFloat(D.toFixed(3)) : null;
+    const Dstr = Dnum !== null ? Dnum.toFixed(3) : '--';
 
-    /* 辅助统计 */
-    const validCt = arr =>
-      arr.filter(d => d.err === 0 && d.rt >= RT_MIN && d.rt <= RT_MAX);
-    const safeMean  = arr => {
-      const v = validCt(arr);
-      return v.length
-        ? Math.round(v.reduce((s, d) => s + d.rt, 0) / v.length)
-        : null;
+    const avRT  = arr => {
+      const v = getValidCorrect(arr);
+      return v.length ? Math.round(v.reduce((s, d) => s + d.rt, 0) / v.length) : '--';
     };
-    const rawErrPct = arr =>
+    const errPct = arr =>
       arr.length
         ? (arr.filter(d => d.err).length / arr.length * 100).toFixed(1)
-        : null;
+        : '--';
     const nExcl = arr =>
-      arr.filter(d => d.err === 0 && (d.rt < RT_MIN || d.rt > RT_MAX)).length;
+      arr.filter(d => d.err === 0 && (d.rt < 200 || d.rt > 2000)).length;
 
-    const cRT    = safeMean(DATA.compat);
-    const iRT    = safeMean(DATA.incompat);
-    const errC   = rawErrPct(DATA.compat);
-    const errI   = rawErrPct(DATA.incompat);
-    const exclC  = nExcl(DATA.compat);
-    const exclI  = nExcl(DATA.incompat);
-    const deltaRT = (cRT !== null && iRT !== null) ? iRT - cRT : null;
-    const speedFlag = formalCount > 0 &&
-                      (fastCount / formalCount) > SPEED_FRAC;
+    const cRT  = avRT(DATA.compat);
+    const iRT  = avRT(DATA.incompat);
+    const errC = errPct(DATA.compat);
+    const errI = errPct(DATA.incompat);
+    const dRT  = (cRT !== '--' && iRT !== '--') ? iRT - cRT : '--';
+    const exclC = nExcl(DATA.compat);
+    const exclI = nExcl(DATA.incompat);
+    const speedFlag = totalFormal > 0 && (fastCount / totalFormal) > 0.10;
 
-    /* 结果解读 */
-    let interp = '数据不足，无法解读', ic = '#94a3b8';
+    /* 解读（D > 0 = 休息—道德威胁联结强）*/
+    let interp = '', ic = '#94a3b8';
     if (Dnum !== null) {
       if      (Dnum >=  0.65) { interp = '强烈「休息—道德威胁」内隐联结';      ic = '#f87171'; }
       else if (Dnum >=  0.35) { interp = '中等联结，休息易自动触发道德威胁感'; ic = '#fbbf24'; }
@@ -2157,42 +2038,26 @@ function initSCIAT(runner) {
       else                    { interp = '休息偏向自动激活道德正向情绪';       ic = '#60a5fa'; }
     }
     const barPct = Dnum !== null
-      ? Math.min(100, Math.max(0, (Dnum + 1) / 2 * 100)).toFixed(1)
-      : '50';
+      ? Math.min(100, Math.max(0, (Dnum + 1) / 2 * 100)) : 50;
 
     /* 警告横幅 */
-    const totalFormal = DATA.compat.length + DATA.incompat.length;
-    const totalExcl   = exclC + exclI;
-    const exclPct     = totalFormal
-      ? (totalExcl / totalFormal * 100).toFixed(1) : '0';
     let warns = '';
     if (Dnum === null) {
-      warns += `
+      warns = `
         <div style="background:rgba(251,191,36,.1);
           border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;font-size:12px;color:#fbbf24;
-          margin-bottom:10px;line-height:1.7">
-          有效正确试次不足（相容：${res.cN}，不相容：${res.iN}，
-          各需 ≥ ${MIN_VALID}），D 值无法计算。
-        </div>`;
-    }
-    if (parseFloat(exclPct) > 20) {
-      warns += `
-        <div style="background:rgba(251,191,36,.1);
-          border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;font-size:12px;color:#fbbf24;
-          margin-bottom:10px;line-height:1.7">
-          ⚠️ 已排除 ${exclPct}% 的正确试次（RT 超出
-          ${RT_MIN}–${RT_MAX} ms 窗口），结果可靠性受影响。
+          padding:10px 14px;max-width:340px;width:100%;
+          font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
+          有效正确试次不足，D 值无法计算（原因：${calcFlag}）。
         </div>`;
     }
     if (speedFlag) {
       warns += `
         <div style="background:rgba(251,191,36,.1);
           border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;font-size:12px;color:#fbbf24;
-          margin-bottom:10px;line-height:1.7">
-          ⚠️ RT &lt; ${RT_MIN} ms 占比 &gt; ${SPEED_FRAC * 100}%，
+          padding:10px 14px;max-width:340px;width:100%;
+          font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
+          ⚠️ 极快反应（RT &lt; 200ms）占比 &gt; 10%，
           请核查该被试数据有效性。
         </div>`;
     }
@@ -2205,7 +2070,7 @@ function initSCIAT(runner) {
 
       ${warns}
 
-      <!-- D 值主卡 -->
+      <!-- D 值主卡（原版结构不变）-->
       <div style="background:rgba(167,139,250,.07);
         border:1.5px solid rgba(167,139,250,.28);
         border-radius:18px;padding:22px 20px;
@@ -2223,7 +2088,6 @@ function initSCIAT(runner) {
             margin-left:auto;margin-right:auto">${interp}</div>
         </div>
 
-        <!-- 刻度条 -->
         <div style="margin:14px 0 4px">
           <div style="display:flex;justify-content:space-between;
             font-size:9px;color:rgba(255,255,255,.28);margin-bottom:5px">
@@ -2239,41 +2103,35 @@ function initSCIAT(runner) {
             <div style="position:absolute;top:50%;left:${barPct}%;
               transform:translate(-50%,-50%);
               width:14px;height:14px;border-radius:50%;
-              background:${ic};border:2.5px solid #0a0a12;z-index:2"></div>
+              background:${ic};border:2.5px solid #0a0a12;
+              box-shadow:0 0 10px ${ic}99;z-index:2"></div>
           </div>
         </div>
         <div style="font-size:9px;color:rgba(255,255,255,.22);
           text-align:center;margin-top:8px">
-          计分：仅正确试次，RT 窗口 ${RT_MIN}–${RT_MAX} ms，样本 SD（N-1）<br>
+          D = (M_不相容 − M_相容) / SD_合并；仅正确试次；RT 200–2000ms；样本SD(N-1)<br>
           效应量：|D| ≥ 0.15 小 · ≥ 0.35 中 · ≥ 0.65 大
           （Karpinski &amp; Steinman, 2006）<br>
-          Counterbalancing 顺序：
-          ${ORDER === 'A' ? '相容先（A）' : '不相容先（B）'}
+          Counterbalancing：
+          ${ORDER === 'A' ? '相容先（顺序 A）' : '不相容先（顺序 B）'}
         </div>
       </div>
 
-      <!-- 详细指标 -->
+      <!-- 详细指标（原版结构，补充 RT 排除数）-->
       ${cardBox(`
         ${resultRow('相容块 均RT（有效正确）',
-          cRT !== null ? cRT + ' ms' : '--', COL_L)}
+          cRT !== '--' ? cRT + ' ms' : '--', COL_L)}
         ${resultRow('不相容块 均RT（有效正确）',
-          iRT !== null ? iRT + ' ms' : '--', COL_R)}
+          iRT !== '--' ? iRT + ' ms' : '--', COL_R)}
         ${resultRow('ΔRT（不相容 − 相容）',
-          deltaRT !== null
-            ? (deltaRT > 0 ? '+' : '') + deltaRT + ' ms'
-            : '--',
-          '#fbbf24')}
-        ${resultRow('相容块 错误率',
-          errC !== null ? errC + ' %' : '--', COL_L)}
-        ${resultRow('不相容块 错误率',
-          errI !== null ? errI + ' %' : '--', COL_R)}
+          dRT !== '--' ? (dRT >= 0 ? '+' : '') + dRT + ' ms' : '--', '#fbbf24')}
+        ${resultRow('相容块 错误率', errC + ' %', COL_L)}
+        ${resultRow('不相容块 错误率', errI + ' %', COL_R)}
         ${resultRow('相容块 RT窗口外排除',
           exclC + ' / ' + DATA.compat.length, '#94a3b8')}
         ${resultRow('不相容块 RT窗口外排除',
           exclI + ' / ' + DATA.incompat.length, '#94a3b8')}
-        ${resultRow('被试编号', subjectId, '#94a3b8')}
-        ${resultRow('开始时间',
-          new Date(startTime).toLocaleTimeString(), '#94a3b8')}
+        ${resultRow('被试编号', SUBJECT_ID, '#94a3b8')}
       `)}
 
       <div style="font-size:12px;color:rgba(255,255,255,.38);
@@ -2284,44 +2142,40 @@ function initSCIAT(runner) {
           本结果仅供学术参考，不构成临床诊断依据。
         </span>
       </div>
-
       ${bigBtn('保存并返回 →', 'window.__scSave()', ACCENT)}
     `);
 
     window.__scSave = async () => {
       const payload = {
-        /* 元信息 */
-        subject_id:            subjectId,
-        start_time:            new Date(startTime).toISOString(),
+        /* [改动6] 元信息 */
+        subject_id:            SUBJECT_ID,
+        start_time:            new Date(START_TIME).toISOString(),
         end_time:              new Date().toISOString(),
         version:               'SC-IAT-v2',
         counterbalancing_order: ORDER,
         /* 计分说明 */
         scoring_method:  '仅正确试次均值，RT窗口200–2000ms，样本SD(N-1)',
         d_formula:       'D = (M_不相容 - M_相容) / SD_合并',
-        compat_is:       ORDER === 'A'
-          ? 'Block3（相容先）休息＋道德威胁'
-          : 'Block5（相容后）休息＋道德威胁',
-        incompat_is:     ORDER === 'A'
-          ? 'Block5（不相容后）休息＋道德正向'
-          : 'Block3（不相容先）休息＋道德正向',
-        rt_window_ms:    `${RT_MIN}–${RT_MAX}`,
+        compat_block:    ORDER === 'A'
+          ? 'Block3（休息＋道德威胁）' : 'Block5（休息＋道德威胁）',
+        incompat_block:  ORDER === 'A'
+          ? 'Block5（休息＋道德正向）' : 'Block3（休息＋道德正向）',
         /* 汇总指标 */
-        D:               res.d !== null ? parseFloat(res.d.toFixed(3)) : null,
-        calc_flag:       res.flag,
-        n_valid_compat:  res.cN,
-        n_valid_incompat:res.iN,
-        mean_rt_compat:  res.cM ? Math.round(res.cM) : null,
-        mean_rt_incompat:res.iM ? Math.round(res.iM) : null,
-        sd_pooled:       res.sd ? parseFloat(res.sd.toFixed(2)) : null,
-        speed_flag:      speedFlag,
-        fast_rt_pct:     formalCount > 0
-          ? parseFloat((fastCount / formalCount * 100).toFixed(1))
-          : null,
+        D:              Dnum,
+        calc_flag:      calcFlag,
+        n_valid_compat:  nValidC,
+        n_valid_incompat:nValidI,
+        compat_rt:      cRT,
+        incompat_rt:    iRT,
+        delta_rt:       dRT,
+        err_compat:     errC,
+        err_incompat:   errI,
+        speed_flag:     speedFlag,
+        fast_rt_pct:    totalFormal > 0
+          ? (fastCount / totalFormal * 100).toFixed(1) + '%' : '--',
         /* 逐试次原始数据 */
         trials_compat:   DATA.compat,
         trials_incompat: DATA.incompat,
-        trials_prac:     PRAC_DATA,
         n_compat:        DATA.compat.length,
         n_incompat:      DATA.incompat.length,
       };
