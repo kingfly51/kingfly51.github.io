@@ -1419,7 +1419,7 @@ function initDigitSpan(runner){
      独立评定，确认唤醒度匹配（配对 t 检验 p > .05）
 ══════════════════════════════════════════════════ */
 function initSCIAT(runner) {
-  runner.innerHTML = mkBar('SC-IAT 休息—道德联结测验') +
+  runner.innerHTML = mkBar('SC-IAT 休息—羞耻联结测验') +
     `<div id="expContent" style="background:#0a0a12;color:#fff;
       overflow-y:auto;flex:1 1 0;min-height:0"></div>`;
  
