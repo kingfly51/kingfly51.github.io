@@ -1370,67 +1370,66 @@ function initDigitSpan(runner){
 
 
 /* ══════════════════════════════════════════════════
-   SC-IAT  休息—道德威胁单类内隐联结测验  v3
+   SC-IAT  休息—道德威胁单类内隐联结测验  v4
    ──────────────────────────────────────────────────
-   基于 v2 的修正（审稿意见逐条处理）：
+   基于 v3，本版修正以下两个相互关联的核心问题：
 
-   [v3-1] 注视点 Jitter（原 1.2）
-     注视点持续时间：均匀随机 [300, 600] ms
-     替代原版固定 400ms，消除时间预期效应
+   [v4-1] Block 结构修正：rest 在两个联合 block 中换侧
+     ──────────────────────────────────────────────
+     原 v3 问题：两个联合 block 中 rest 始终在同一侧（左键），
+     导致被试内按键频率无法平衡（两个 block 均 58% 同侧）。
 
-   [v3-2] ISI Jitter（原 1.3）
-     试次间隔：均匀随机 [400, 700] ms
-     替代原版固定 500ms
+     参考 Karpinski & Steinman (2006) Coke SC-IAT：
+       Stage 1：Coke+good → 左键（58%），bad → 右键（42%）
+       Stage 2：bad → 左键（42%），Coke+bad → 右键（58%）
+       Coke 在两个 stage 换侧，被试内跨 stage 均值恰好 50%。
 
-   [v3-3] 高精度计时（原 1.4 / 1.5）
-     所有 RT 计算改用 performance.now()（亚毫秒精度）
-     补偿 setTimeout 漂移：用实际触发时刻而非预设时刻作为 t0
-     Date.now() 仅保留用于元信息时间戳
+     本版修正：
+       相容 block：  leftCats=['rest','threat'], rightCats=['virtue']   → rest 在左(E)
+       不相容 block：leftCats=['threat'],         rightCats=['rest','virtue'] → rest 在右(I)
+       两个 block rest 所在侧相反 → 被试内平均 E/I 各 50% ✅
 
-   [v3-4] 试次类别均衡（原 2.1）
-     SC-IAT 标准：目标类别（rest）与属性类别（threat/virtue）
-     各占 50%，保证左右按键频率相等，消除运动偏向。
-     具体实现：
-       · 联合任务 block：rest 词占 50%，属性词（非 rest）占 50%
-       · 属性辨别 block：threat 与 virtue 各占 50%，保持原逻辑
-     理论依据：Karpinski & Steinman (2006) SC-IAT 设计规范要求
-     目标类别与属性类别等比呈现
+   [v4-2] 试次比例修正：7:7:10
+     ──────────────────────────────────────────────
+     原 v3 问题：联合 block 中目标词(rest)50%、配对属性词50%，
+     非配对属性词不出现，不符合原版 SC-IAT 三类词同时呈现的设计。
 
-   [v3-5] 连续同类刺激上限（原 2.2）
-     shuffle 后施加约束：同一类别刺激连续出现不超过 3 次。
-     超出时将第 4 个及以后的同类试次移至序列后部重新插入。
-     在 SC-IAT 中合理性：减少局部运动习惯化对 RT 的干扰，
-     同时不破坏整体随机性（仅局部重排）。
+     参考原文比例（Karpinski & Steinman, 2006）：
+       目标类别(rest) : 配对属性 : 非配对属性 = 7 : 7 : 10
+       24 试次 → 7 + 7 + 10 = 24
+       72 试次 → 21 + 21 + 30 = 72
 
-   [v3-6] 全局命名空间隔离（原 5.2）
-     所有 window.__sc* 函数改为带唯一实例 ID 的命名，
-     防止多实例并发时相互覆盖。
+     每个联合 block 的按键频率：
+       相容 block：
+         E键(rest+threat) = 21+21 = 42 次 = 58.3%
+         I键(virtue)      = 30 次 = 41.7%
+       不相容 block：
+         E键(threat)       = 30 次 = 41.7%
+         I键(rest+virtue) = 21+21 = 42 次 = 58.3%
+       被试内 E 键均值 = (58.3+41.7)/2 = 50.0% ✅
 
-   [v3-7] 词表去重（原 5.3）
-     virtue_prac 与 virtue_formal 原存在 5 个重叠词，
-     已将 virtue_prac 替换为完全不同的词，两组严格不重叠。
-
-   [v3-8] block 标签动态化（原 3.1）
-     payload 中 compat_block / incompat_block 改为
-     运行时从 BLOCKS 动态读取，避免硬编码注释随代码修改而失效。
-
-   [v3-9] 慢反应比例检查（原 4.1）
-     新增 slowCount 统计 RT > 2000ms 的试次数量，
-     结果页显示慢反应比例，若 > 10% 触发警告横幅。
-
-   [v3-10] 练习阶段错误率检查（原 4.2）
-     练习阶段实时统计错误率，若 block 结束时错误率 > 40%，
-     弹出警告并要求重新阅读规则后才能继续正式任务。
+     设计意图：
+       · 非配对属性词出现确保被试始终需要区分三类刺激，
+         维持认知负荷，防止任务退化为简单的二元判断
+       · 目标词(rest)在两个 block 中呈现次数相同(21次)，
+         消除词频对 RT 的混淆
+       · 比例 7:7:10 是原版 SC-IAT 经验证的标准设置
 
    ──────────────────────────────────────────────────
-   保持不变：
-     · 整体结构、渲染逻辑、Counterbalancing、
-     · Block 定义、UI 风格、宿主接口（saveAndClose）
-     · RT 记录逻辑：err=1 试次保留 RT 字段（记录错误反应时），
-       不纳入 D 值分析（calcD 仅使用 err=0 试次）——已确认合理
+   继承自 v3 的所有修正（保持不变）：
+     [v3-1]  注视点 jitter：randInt(300, 600) ms
+     [v3-2]  ISI jitter：randInt(400, 700) ms
+     [v3-3]  performance.now() 高精度计时 + setTimeout 漂移补偿
+     [v3-5]  MaxRepeat-aware Greedy Shuffle（同类最多连续 3 次）
+     [v3-6]  全局命名空间隔离（唯一实例 ID）
+     [v3-7]  virtue_prac / virtue_formal 严格不重叠
+     [v3-8]  Block 标签动态化
+     [v3-9]  慢反应比例检查（RT > 2000ms > 10% 警告）
+     [v3-10] 练习阶段错误率检查（> 40% 警告）
+     [原版]  D 值方向、计分算法、Counterbalancing、宿主接口
 ══════════════════════════════════════════════════ */
 function initSCIAT(runner) {
-  /* [v3-6] 唯一实例 ID，防止多实例全局命名冲突 */
+  /* 唯一实例 ID，防止多实例全局命名冲突 */
   const IID = 'sc_' + Math.random().toString(36).slice(2, 8);
 
   runner.innerHTML = mkBar('SC-IAT 休息—羞耻联结测验') +
@@ -1438,75 +1437,94 @@ function initSCIAT(runner) {
 
   /* ────────────────────────────────────────────────
      词表
-     [v3-7] virtue_prac 与 virtue_formal 严格不重叠
-     原重叠词（无愧/心安/坦然/清白/踏实）已全部移入 formal，
-     prac 替换为全新词：安然/平和/坦荡/从容/知足/洒脱/顺遂/淡然
+     threat_prac / threat_formal 严格不重叠
+     virtue_prac / virtue_formal 严格不重叠（v3-7）
+     rest_prac   / rest_formal   严格不重叠
   ──────────────────────────────────────────────── */
   const STIM = {
-    /* 道德威胁（练习 8，正式 10，严格不重叠） */
     threat_prac:   ['悔过','愧对','失格','心虚','亏欠','惭色','赎罪','歉疚'],
     threat_formal: ['羞耻','惭愧','负罪','悔恨','内疚','懊悔','愧疚','自惭','愧色','羞惭'],
 
-    /* 道德正向（练习 8，正式 10，严格不重叠）
-       [v3-7] prac 全部替换，与 formal 零重叠 */
     virtue_prac:   ['安然','平和','坦荡','从容','知足','洒脱','顺遂','淡然'],
     virtue_formal: ['自豪','无愧','心安','正直','清白','踏实','释然','坦然','无憾','平静'],
 
-    /* 休息词（练习 8，正式 10，严格不重叠） */
     rest_prac:     ['赖床','打盹','歇息','放空','闲逛','假寐','踱步','晒太阳'],
     rest_formal:   ['散步','泡澡','懒觉','午睡','放松','观影','发呆','闲坐','赏景','养神'],
   };
 
   /* ────────────────────────────────────────────────
-     Counterbalancing（组间随机分配）—— 原版不变
-       ORDER A：先相容（休息＋道德威胁→左）
-       ORDER B：先不相容（休息＋道德正向→左）
+     Counterbalancing
+       ORDER A：先相容（rest+threat→E），后不相容（threat→E）
+       ORDER B：先不相容，后相容
+     注：两种顺序下 rest 均在相容block按E、不相容block按I，
+         被试内 E/I 频率均为 50%，counterbalancing 仅影响顺序效应。
   ──────────────────────────────────────────────── */
   const ORDER = Math.random() < 0.5 ? 'A' : 'B';
 
-  /* 被试 ID 与开始时间戳（Date.now() 仅用于元信息） */
   const SUBJECT_ID = 'sub_' + Date.now().toString(36) +
                      '_' + Math.random().toString(36).slice(2, 6);
   const START_TIME = Date.now();
 
-  function makeBlocks(order) {
-    const first = order === 'A'
-      ? { type:'compat',   leftLbl:'休息 / 道德威胁', rightLbl:'道德正向',
-          leftCats:['rest','threat'], rightCats:['virtue'] }
-      : { type:'incompat', leftLbl:'休息 / 道德正向', rightLbl:'道德威胁',
-          leftCats:['rest','virtue'], rightCats:['threat'] };
-    const second = order === 'A'
-      ? { type:'incompat', leftLbl:'休息 / 道德正向', rightLbl:'道德威胁',
-          leftCats:['rest','virtue'], rightCats:['threat'] }
-      : { type:'compat',   leftLbl:'休息 / 道德威胁', rightLbl:'道德正向',
-          leftCats:['rest','threat'], rightCats:['virtue'] };
+  /* ────────────────────────────────────────────────
+     [v4-1] Block 定义修正
+     相容 block：  leftCats=['rest','threat'], rightCats=['virtue']
+     不相容 block：leftCats=['threat'],         rightCats=['rest','virtue']
+     rest 在两个 block 换侧（左 → 右），实现被试内按键频率平衡。
 
-    const attrLeftCats  = order === 'A' ? ['threat'] : ['virtue'];
-    const attrRightCats = order === 'A' ? ['virtue'] : ['threat'];
-    const attrLeftLbl   = order === 'A' ? '道德威胁' : '道德正向';
-    const attrRightLbl  = order === 'A' ? '道德正向' : '道德威胁';
+     [v4-2] 比例标注（实际在 makeTrials 中实现）
+     正式 72 试次：rest=21, 配对属性=21, 非配对属性=30
+     练习 24 试次：rest=7,  配对属性=7,  非配对属性=10
+  ──────────────────────────────────────────────── */
+  function makeBlocks(order) {
+    /*
+      相容 block 固定结构（两种 order 共用）：
+        E键：休息 / 道德威胁（rest+threat）
+        I键：道德正向（virtue）
+        比例：rest=21, threat=21, virtue=30（正式）/ 7,7,10（练习）
+        E键频率：(21+21)/72 = 58.3%
+
+      不相容 block 固定结构（两种 order 共用）：
+        E键：道德威胁（threat）← 单独类别，非配对属性，出现最多
+        I键：道德正向 / 休息（virtue+rest）
+        比例：threat=30, rest=21, virtue=21（正式）/ 10,7,7（练习）
+        E键频率：30/72 = 41.7%
+    */
+    const compatDef = {
+      type:     'compat',
+      leftLbl:  '休息 / 道德威胁',
+      rightLbl: '道德正向',
+      leftCats: ['rest', 'threat'],
+      rightCats:['virtue'],
+    };
+    const incompatDef = {
+      type:     'incompat',
+      leftLbl:  '道德威胁',
+      rightLbl: '道德正向 / 休息',
+      leftCats: ['threat'],
+      rightCats:['virtue', 'rest'],
+    };
+
+    const first  = order === 'A' ? compatDef   : incompatDef;
+    const second = order === 'A' ? incompatDef : compatDef;
+
+    /* 属性辨别练习 block（无 rest，仅 threat vs virtue） */
+    const attrDef = {
+      id:1, label:'属性辨别练习',
+      n:24, prac:true, type:'attr',
+      leftLbl: '道德威胁', rightLbl: '道德正向',
+      leftCats:['threat'], rightCats:['virtue'],
+    };
 
     return [
-      { id:1, label:'属性辨别练习',
-        n:24, prac:true, type:'attr',
-        leftLbl:attrLeftLbl, rightLbl:attrRightLbl,
-        leftCats:attrLeftCats, rightCats:attrRightCats },
-      { id:2, label:`联合任务练习（${first.type==='compat'?'相容':'不相容'}）`,
-        n:24, prac:true, type:first.type,
-        leftLbl:first.leftLbl, rightLbl:first.rightLbl,
-        leftCats:first.leftCats, rightCats:first.rightCats },
-      { id:3, label:`联合任务正式（${first.type==='compat'?'相容':'不相容'}）`,
-        n:72, prac:false, type:first.type,
-        leftLbl:first.leftLbl, rightLbl:first.rightLbl,
-        leftCats:first.leftCats, rightCats:first.rightCats },
-      { id:4, label:`联合任务练习（${second.type==='compat'?'相容':'不相容'}）`,
-        n:24, prac:true, type:second.type,
-        leftLbl:second.leftLbl, rightLbl:second.rightLbl,
-        leftCats:second.leftCats, rightCats:second.rightCats },
-      { id:5, label:`联合任务正式（${second.type==='compat'?'相容':'不相容'}）`,
-        n:72, prac:false, type:second.type,
-        leftLbl:second.leftLbl, rightLbl:second.rightLbl,
-        leftCats:second.leftCats, rightCats:second.rightCats },
+      { ...attrDef },
+      { ...first,  id:2, label:`联合任务练习（${first.type==='compat'?'相容':'不相容'}）`,
+        n:24, prac:true  },
+      { ...first,  id:3, label:`联合任务正式（${first.type==='compat'?'相容':'不相容'}）`,
+        n:72, prac:false },
+      { ...second, id:4, label:`联合任务练习（${second.type==='compat'?'相容':'不相容'}）`,
+        n:24, prac:true  },
+      { ...second, id:5, label:`联合任务正式（${second.type==='compat'?'相容':'不相容'}）`,
+        n:72, prac:false },
     ];
   }
 
@@ -1523,7 +1541,6 @@ function initSCIAT(runner) {
     return a;
   }
 
-  /* [v3-1/2] 随机 jitter 辅助 */
   function randInt(lo, hi) {
     return Math.floor(Math.random() * (hi - lo + 1)) + lo;
   }
@@ -1537,25 +1554,26 @@ function initSCIAT(runner) {
     return blk.leftCats.includes(cat) ? 'left' : 'right';
   }
 
-  /* ──────────────────────────────────────────────────
-     [v3-5] 连续同类约束：同一类别最多连续 MAX_RUN 次
-     算法：MaxRepeat-aware Greedy Shuffle
-       1. 按 cat 分桶，各桶内部独立 shuffle（保持词序随机性）
-       2. 贪心重建序列：每步选"剩余最多且不违反连续上限"的 cat
-          · streak 检测：recent 队列记录最近 MAX_RUN 个 cat，
-            若全相同则禁止继续选该 cat
-          · 若所有剩余 cat 均违规（极端情况）则强制选剩余最多者
-       3. 经 500 次模拟验证：2 类 / 3 类均无违规
+  /* fillQueue：循环补充词库至指定数量，内部先打乱 */
+  function fillQueue(words, n) {
+    let q = [];
+    while (q.length < n) q = q.concat(shuffle(words));
+    return q.slice(0, n);
+  }
 
-     在 SC-IAT 中的合理性：
-       · 减少局部运动习惯化（同一按键连按过多次）对 RT 的混淆
-       · 不破坏整体类别比例和词内随机性
-       · 最大连续数 3 参考 IAT 相关文献（Nosek et al., 2002）
+  /* ──────────────────────────────────────────────────
+     MaxRepeat-aware Greedy Shuffle（v3-5，沿用）
+     ──────────────────────────────────────────────────
+     经 500 次模拟验证，2类/3类均保证同一类别最多连续 MAX_RUN 次。
+     算法：
+       1. 按 cat 分桶，各桶内词序独立 shuffle
+       2. 贪心重建序列：优先选"剩余最多且不触发连续上限"的 cat
+          · 以剩余数量加权：防止末尾堆积大量同类
+          · 若唯一剩余 cat 已达上限，强制继续（极端情况）
   ────────────────────────────────────────────────── */
   const MAX_RUN = 3;
 
   function maxRepeatShuffle(items) {
-    /* 分桶并对各桶词序独立 shuffle */
     const counts = {}, queues = {};
     for (const t of items) {
       counts[t.cat] = (counts[t.cat] || 0) + 1;
@@ -1572,23 +1590,19 @@ function initSCIAT(runner) {
 
     const result = [];
     const n      = items.length;
-    const recent = [];   /* 最近 MAX_RUN 个 cat 的滑动窗口 */
+    const recent = [];
 
     while (result.length < n) {
       const cats = Object.keys(counts).filter(c => counts[c] > 0);
       if (!cats.length) break;
 
-      /* 检测当前是否处于连续上限状态 */
       const streak = (recent.length >= MAX_RUN &&
         recent.slice(-MAX_RUN).every(c => c === recent[recent.length - 1]))
         ? recent[recent.length - 1] : null;
 
-      /* 允许的 cat：排除正在连续的 cat */
       const allowed = streak ? cats.filter(c => c !== streak) : cats;
-      /* 若无合法选项（全为 streak），强制选剩余最多者 */
-      const pool = allowed.length ? allowed : cats;
+      const pool    = allowed.length ? allowed : cats;
 
-      /* 贪心：选剩余数量最多的 cat（防止末尾堆积） */
       pool.sort((a, b) => counts[b] - counts[a]);
       const chosen = pool[0];
 
@@ -1602,85 +1616,89 @@ function initSCIAT(runner) {
   }
 
   /* ──────────────────────────────────────────────────
-     [v3-4] 试次生成——类别均衡
+     [v4-2] 试次生成：7:7:10 比例
      ──────────────────────────────────────────────────
-     SC-IAT 标准（Karpinski & Steinman, 2006）：
-     目标类别（rest）与属性类别（threat/virtue）各占 50%，
-     确保左右按键频率相等，消除运动偏向。
+     联合 block（含 rest）：
+       · 识别"目标类别"(rest)、"配对属性"、"非配对属性"
+       · 配对属性 = 与 rest 共享同侧的非 rest 类别
+       · 非配对属性 = 独占另一侧的类别
+       · 比例：rest : 配对属性 : 非配对属性 = 7 : 7 : 10（24 次基准）
+       · 正式 72 次：21 : 21 : 30
+       · 练习 24 次：7  : 7  : 10
 
-     实现策略：
-     · 联合任务 block（含 rest）：
-         - 分配 n/2 个 rest 试次
-         - 分配 n/2 个属性词试次（非 rest 类别均分）
-     · 属性辨别 block（无 rest）：
-         - 各类别均分（原版逻辑，等比分配）
-
-     单类词库填充：若 n/2 > 词库大小，循环补充（shuffle 后拼接）
+     属性辨别 block（无 rest）：
+       · 两类各 50%（12:12 或 n/2 : n/2）
   ────────────────────────────────────────────────── */
-  function fillQueue(words, n) {
-    let q = [];
-    while (q.length < n) q = q.concat(shuffle(words));
-    return q.slice(0, n);
-  }
-
   function makeTrials(blk) {
-    const isJoint = blk.leftCats.includes('rest') || blk.rightCats.includes('rest');
+    const hasRest = blk.leftCats.includes('rest') ||
+                    blk.rightCats.includes('rest');
+    const rawTrials = [];
 
-    let rawTrials = [];
+    if (hasRest) {
+      /*
+        确定配对属性和非配对属性：
+          · rest 所在侧的其他 cat = 配对属性
+          · rest 不在侧的所有 cat = 非配对属性
+        例：
+          相容 block：leftCats=['rest','threat'], rightCats=['virtue']
+            → 配对属性 = ['threat']，非配对属性 = ['virtue']
+          不相容 block：leftCats=['threat'], rightCats=['virtue','rest']
+            → 配对属性 = ['virtue']，非配对属性 = ['threat']
+      */
+      const restSide   = blk.leftCats.includes('rest') ? blk.leftCats : blk.rightCats;
+      const otherSide  = blk.leftCats.includes('rest') ? blk.rightCats : blk.leftCats;
+      const pairedCats = restSide.filter(c => c !== 'rest');  /* 配对属性 */
+      const unpairCats = otherSide;                           /* 非配对属性 */
 
-    if (isJoint) {
-      /* 联合 block：rest 50%，属性词 50% */
-      const nHalf  = Math.floor(blk.n / 2);
-      const nRest  = nHalf;
-      const nAttr  = blk.n - nHalf; // 处理奇数（实际均为偶数，保险起见）
+      /* 基准比例：7:7:10（对应 24 次），按 blk.n 等比缩放 */
+      const base    = blk.n / 24;          /* 24->1, 72->3 */
+      const nRest   = Math.round(7  * base); /* 7  or 21 */
+      const nPaired = Math.round(7  * base); /* 7  or 21 */
+      const nUnpair = blk.n - nRest - nPaired; /* 10 or 30，残差防止取整误差 */
 
-      /* 属性类别（除 rest 外） */
-      const attrCats = [...new Set([...blk.leftCats, ...blk.rightCats])]
-                         .filter(c => c !== 'rest');
+      /* rest */
+      fillQueue(getWords('rest', blk.prac), nRest)
+        .forEach(w => rawTrials.push({ word: w, cat: 'rest', correct: correctKey(blk, 'rest') }));
 
-      /* rest 试次 */
-      const restWords = fillQueue(getWords('rest', blk.prac), nRest);
-      restWords.forEach(w => rawTrials.push({
-        word: w, cat: 'rest', correct: correctKey(blk, 'rest')
-      }));
+      /* 配对属性词（各类均分，通常只有一类） */
+      const nPerPaired = Math.floor(nPaired / pairedCats.length);
+      let remP = nPaired - nPerPaired * pairedCats.length;
+      pairedCats.forEach(cat => {
+        const cnt = nPerPaired + (remP-- > 0 ? 1 : 0);
+        fillQueue(getWords(cat, blk.prac), cnt)
+          .forEach(w => rawTrials.push({ word: w, cat, correct: correctKey(blk, cat) }));
+      });
 
-      /* 属性试次：各属性类别均分 */
-      const nPerAttr = Math.floor(nAttr / attrCats.length);
-      let attrRemainder = nAttr - nPerAttr * attrCats.length;
-      attrCats.forEach(cat => {
-        const cnt = nPerAttr + (attrRemainder-- > 0 ? 1 : 0);
-        const words = fillQueue(getWords(cat, blk.prac), cnt);
-        words.forEach(w => rawTrials.push({
-          word: w, cat, correct: correctKey(blk, cat)
-        }));
+      /* 非配对属性词（各类均分，通常只有一类） */
+      const nPerUnpair = Math.floor(nUnpair / unpairCats.length);
+      let remU = nUnpair - nPerUnpair * unpairCats.length;
+      unpairCats.forEach(cat => {
+        const cnt = nPerUnpair + (remU-- > 0 ? 1 : 0);
+        fillQueue(getWords(cat, blk.prac), cnt)
+          .forEach(w => rawTrials.push({ word: w, cat, correct: correctKey(blk, cat) }));
       });
     } else {
-      /* 属性辨别 block：各类别均分（原版逻辑） */
+      /* 属性辨别 block：threat / virtue 各 50% */
       const cats = [...new Set([...blk.leftCats, ...blk.rightCats])];
       const nPer = Math.floor(blk.n / cats.length);
       let rem    = blk.n - nPer * cats.length;
       cats.forEach(cat => {
-        const cnt  = nPer + (rem-- > 0 ? 1 : 0);
-        const words = fillQueue(getWords(cat, blk.prac), cnt);
-        words.forEach(w => rawTrials.push({
-          word: w, cat, correct: correctKey(blk, cat)
-        }));
+        const cnt = nPer + (rem-- > 0 ? 1 : 0);
+        fillQueue(getWords(cat, blk.prac), cnt)
+          .forEach(w => rawTrials.push({ word: w, cat, correct: correctKey(blk, cat) }));
       });
     }
 
-    /* shuffle 后施加连续上限约束 [v3-5] */
-    return maxRepeatShuffle(rawTrials);  /* [v3-5] 内含 shuffle + 连续上限约束 */
+    return maxRepeatShuffle(rawTrials);
   }
 
   /* ══ 状态 ═══════════════════════════════════════════ */
   let blkIdx = 0, trialIdx = 0, curTrials = [];
   let needCorrect = false, wordShown = false;
-  let t0 = 0; /* performance.now() 时间戳 [v3-3] */
+  let t0 = 0;
   const DATA = { compat: [], incompat: [] };
   let fastCount = 0, slowCount = 0, totalFormal = 0;
   let phase = 'consent';
-
-  /* 练习阶段错误统计 [v3-10] */
   let pracErrCount = 0, pracTrialCount = 0;
 
   const C      = () => document.getElementById(`expContent_${IID}`);
@@ -1688,9 +1706,8 @@ function initSCIAT(runner) {
   const COL_L  = '#60a5fa';
   const COL_R  = '#f87171';
 
-  /* [v3-6] 注册/调用全局函数的辅助（带实例 ID） */
   function reg(name, fn) { window[`__${IID}_${name}`] = fn; }
-  function call(name) { return `window.__${IID}_${name}()`; }
+  function call(name)    { return `window.__${IID}_${name}()`; }
 
   /* ══ 渲染入口 ══════════════════════════════════════ */
   function render() {
@@ -1783,15 +1800,28 @@ function initSCIAT(runner) {
     reg('go', () => { phase = 'blockIntro'; render(); });
   }
 
-  /* ══ Block 说明页（原版，改用 [v3-6] 命名）══════════ */
+  /* ══ Block 说明页 ══════════════════════════════════ */
   function showBlockIntro() {
     const blk      = BLOCKS[blkIdx];
     const isSwitch = blkIdx === 3;
     setPBar(blkIdx, BLOCKS.length);
 
-    /* [v3-10] 重置练习统计 */
-    pracErrCount  = 0;
+    pracErrCount   = 0;
     pracTrialCount = 0;
+
+    /* 按键频率提示（仅联合 block） */
+    let freqHint = '';
+    if (blk.type !== 'attr') {
+      const leftPct  = blk.leftCats.includes('rest')
+        ? '58%' : '42%';
+      const rightPct = blk.leftCats.includes('rest')
+        ? '42%' : '58%';
+      freqHint = `
+        <div style="font-size:11px;color:rgba(255,255,255,.28);
+          text-align:center;margin-bottom:14px;line-height:1.7">
+          本阶段 E 键约 ${leftPct} · I 键约 ${rightPct}（正常现象）
+        </div>`;
+    }
 
     C().innerHTML = wrap(`
       <div style="font-size:11px;color:rgba(255,255,255,.3);
@@ -1857,6 +1887,8 @@ function initSCIAT(runner) {
           </span>
         </div>` : ''}
 
+      ${freqHint}
+
       <div style="font-size:12px;color:rgba(255,255,255,.38);
         text-align:center;margin-bottom:20px">
         ${blk.prac
@@ -1879,12 +1911,7 @@ function initSCIAT(runner) {
     });
   }
 
-  /* ══ 试次画面 ════════════════════════════════════════
-     [v3-1]  注视点 jitter：randInt(300, 600) ms
-     [v3-2]  ISI jitter：randInt(400, 700) ms
-     [v3-3]  RT 改用 performance.now()，补偿 setTimeout 漂移
-     [v3-6]  全局函数改用实例 ID
-  ══════════════════════════════════════════════════ */
+  /* ══ 试次画面 ════════════════════════════════════════ */
   function showTrial() {
     const blk      = BLOCKS[blkIdx];
     const tr       = curTrials[trialIdx];
@@ -1902,7 +1929,6 @@ function initSCIAT(runner) {
         flex-direction:column;user-select:none;
         -webkit-user-select:none;touch-action:manipulation">
 
-        <!-- 顶部类别标签栏 -->
         <div style="display:flex;height:60px;flex-shrink:0">
           <div id="sc_left_${IID}" onclick="${call('tap_left')}"
             style="flex:1;background:rgba(96,165,250,.07);
@@ -1934,7 +1960,6 @@ function initSCIAT(runner) {
           </div>
         </div>
 
-        <!-- 刺激中区 -->
         <div style="flex:1;display:flex;flex-direction:column;
           align-items:center;justify-content:center">
 
@@ -1944,7 +1969,6 @@ function initSCIAT(runner) {
               练习 ${trialIdx + 1} / ${blk.n}
             </div>`}
 
-          <!-- 注视点与词语叠放在同一容器内 -->
           <div style="position:relative;width:320px;height:80px;
             display:flex;align-items:center;justify-content:center">
             <div id="scFix_${IID}"
@@ -1960,7 +1984,6 @@ function initSCIAT(runner) {
               transition:opacity .05s;opacity:0">${tr.word}</div>
           </div>
 
-          <!-- 错误反馈 -->
           <div id="scFb_${IID}"
             style="margin-top:24px;font-size:28px;min-height:36px;
             color:#ef4444;opacity:0;transition:opacity .08s;
@@ -1971,7 +1994,6 @@ function initSCIAT(runner) {
               margin-top:12px">按 E 或 I 作答</div>`}
         </div>
 
-        <!-- 底部触控区 -->
         <div style="display:flex;height:68px;flex-shrink:0;
           border-top:0.5px solid rgba(255,255,255,.05)">
           <div onclick="${call('tap_left')}"
@@ -1987,33 +2009,23 @@ function initSCIAT(runner) {
         </div>
       </div>`;
 
-    /* ──────────────────────────────────────────────
-       [v3-1] 注视点 jitter：randInt(300, 600) ms
-       [v3-3] 补偿 setTimeout 漂移：
-         scheduleAt 记录预期时刻，
-         实际触发时用 performance.now() 作为 t0 基准，
-         不依赖 setTimeout 的精确性。
-    ────────────────────────────────────────────── */
+    /* [v3-1] 注视点 jitter 300–600ms，[v3-3] t0 = performance.now() */
     const fixDur = randInt(300, 600);
     setTimeout(() => {
       const fixEl  = document.getElementById(`scFix_${IID}`);
       const wordEl = document.getElementById(`scWord_${IID}`);
       if (fixEl)  fixEl.style.opacity  = '0';
       if (wordEl) wordEl.style.opacity = '1';
-      /* [v3-3] t0 使用 performance.now()，在回调内取值，
-         直接反映词语出现时刻，已包含 setTimeout 漂移的补偿 */
       t0        = performance.now();
       wordShown = true;
     }, fixDur);
 
-    /* 键盘监听（具名函数，精确移除，[v3-6] 实例 ID） */
     window[`__${IID}_keyHandler`] = function(e) {
       if (e.key === 'e' || e.key === 'E') window[`__${IID}_tap`]('left');
       if (e.key === 'i' || e.key === 'I') window[`__${IID}_tap`]('right');
     };
     document.addEventListener('keydown', window[`__${IID}_keyHandler`]);
 
-    /* tap 快捷调用（供 onclick 字符串使用） */
     reg('tap_left',  () => window[`__${IID}_tap`]('left'));
     reg('tap_right', () => window[`__${IID}_tap`]('right'));
 
@@ -2021,13 +2033,10 @@ function initSCIAT(runner) {
       if (!wordShown) return;
 
       if (side !== tr.correct) {
-        /* 错误：记录错误按键时的 RT（[v3-3] performance.now()），
-           标记 needCorrect，不纳入 D 值计算（err=1 被排除）*/
         if (!needCorrect) {
           window[`__${IID}_firstRT`] = Math.round(performance.now() - t0);
           needCorrect = true;
         }
-        /* [v3-10] 练习阶段错误计数 */
         if (blk.prac) pracErrCount++;
         const fb  = document.getElementById(`scFb_${IID}`);
         if (fb) fb.style.opacity = '1';
@@ -2037,9 +2046,7 @@ function initSCIAT(runner) {
         return;
       }
 
-      /* 正确按键 */
       document.removeEventListener('keydown', window[`__${IID}_keyHandler`]);
-      /* [v3-3] RT 使用 performance.now() */
       const rt       = needCorrect
         ? window[`__${IID}_firstRT`]
         : Math.round(performance.now() - t0);
@@ -2051,10 +2058,8 @@ function initSCIAT(runner) {
       const fb = document.getElementById(`scFb_${IID}`);
       if (fb) fb.style.opacity = '0';
 
-      /* [v3-10] 练习阶段总试次计数 */
       if (blk.prac) pracTrialCount++;
 
-      /* 正式 block 写入数据 */
       if (!blk.prac) {
         DATA[blk.type].push({
           trial_n:  DATA[blk.type].length + 1,
@@ -2067,23 +2072,22 @@ function initSCIAT(runner) {
         });
         totalFormal++;
         if (rt < 200)  fastCount++;
-        if (rt > 2000) slowCount++;     /* [v3-9] 慢反应计数 */
+        if (rt > 2000) slowCount++;
       }
 
-      /* [v3-2] ISI jitter：randInt(400, 700) ms */
+      /* [v3-2] ISI jitter 400–700ms */
       setTimeout(() => {
         trialIdx++;
         if (trialIdx >= curTrials.length) {
-          /* 正式 block：错误率检查（仅当前 block） */
           if (!blk.prac) {
             const blkData = DATA[blk.type].filter(d => d.block_id === blk.id);
             const errRate = blkData.filter(d => d.err).length / blkData.length;
             if (errRate > 0.30) { phase = 'errAbort'; render(); return; }
           }
-          /* [v3-10] 练习 block：高错误率警告 */
           if (blk.prac && pracTrialCount > 0) {
-            const pracErr = pracErrCount / pracTrialCount;
-            if (pracErr > 0.40) { phase = 'pracWarn'; render(); return; }
+            if (pracErrCount / pracTrialCount > 0.40) {
+              phase = 'pracWarn'; render(); return;
+            }
           }
           phase = blkIdx < BLOCKS.length - 1 ? 'blockDone' : 'result';
         } else {
@@ -2094,9 +2098,8 @@ function initSCIAT(runner) {
     };
   }
 
-  /* ══ [v3-10] 练习高错误率警告页 ══════════════════════ */
+  /* ══ 练习高错误率警告页 ══════════════════════════════ */
   function showPracWarn() {
-    const blk = BLOCKS[blkIdx];
     setPBar(blkIdx, BLOCKS.length);
     C().innerHTML = wrap(`
       <div style="text-align:center;padding:28px 0">
@@ -2108,7 +2111,7 @@ function initSCIAT(runner) {
             本练习阶段错误率超过 <strong style="color:#fbbf24">40%</strong>，
             建议在继续正式任务前重新熟悉规则。<br><br>
             · 请重新阅读按键规则后再开始<br>
-            · 每次只需判断词语属于<strong>左侧</strong>还是<strong>右侧</strong>类别<br>
+            · 每次只需判断词语属于左侧还是右侧类别<br>
             · 不确定时先猜，答错会有提示，按正确键后继续<br><br>
             <span style="color:rgba(255,255,255,.4);font-size:12px">
               如选择继续，正式阶段数据仍会被记录分析。
@@ -2121,10 +2124,7 @@ function initSCIAT(runner) {
         </div>
       </div>
     `);
-    reg('reprac', () => {
-      /* 重新进入当前 block 说明页 */
-      phase = 'blockIntro'; render();
-    });
+    reg('reprac',   () => { phase = 'blockIntro'; render(); });
     reg('skipcont', () => {
       blkIdx++;
       if (blkIdx >= BLOCKS.length) { phase = 'result'; render(); return; }
@@ -2132,11 +2132,10 @@ function initSCIAT(runner) {
     });
   }
 
-  /* ══ Block 完成过渡（[v3-6] 改用实例 ID）══════════════ */
+  /* ══ Block 完成过渡 ══════════════════════════════════ */
   function showBlockDone() {
     blkIdx++;
     if (blkIdx >= BLOCKS.length) { phase = 'result'; render(); return; }
-    const blk      = BLOCKS[blkIdx];
     const isSwitch = blkIdx === 3;
     setPBar(blkIdx, BLOCKS.length);
 
@@ -2162,7 +2161,7 @@ function initSCIAT(runner) {
     reg('cont', () => { phase = 'blockIntro'; render(); });
   }
 
-  /* ══ 高错误率中断（正式 block，[v3-6]）══════════════════ */
+  /* ══ 高错误率中断（正式 block）══════════════════════ */
   function showErrAbort() {
     setPBar(0, 1);
     C().innerHTML = wrap(`
@@ -2194,13 +2193,7 @@ function initSCIAT(runner) {
     });
   }
 
-  /* ══ 结果页 ════════════════════════════════════════════
-     [改动1] D = (M_不相容 − M_相容) / SD_合并
-     [改动2] 仅正确试次（err=0）
-     [改动3] RT 窗口：200–2000 ms
-     [v3-8]  block 标签动态化
-     [v3-9]  慢反应比例警告
-  ════════════════════════════════════════════════════ */
+  /* ══ 结果页 ════════════════════════════════════════════ */
   function showResult() {
     setPBar(1, 1);
 
@@ -2226,23 +2219,21 @@ function initSCIAT(runner) {
                cN: cV.length, iN: iV.length };
     }
 
-    function getValidCorrect(arr) {
-      return arr.filter(d => d.err === 0 && d.rt >= 200 && d.rt <= 2000);
-    }
-
     const { d: D, flag: calcFlag,
             cN: nValidC, iN: nValidI } = calcD(DATA.compat, DATA.incompat);
     const Dnum = D !== null ? parseFloat(D.toFixed(3)) : null;
     const Dstr = Dnum !== null ? Dnum.toFixed(3) : '--';
 
+    const validArr = arr =>
+      arr.filter(d => d.err === 0 && d.rt >= 200 && d.rt <= 2000);
+
     const avRT  = arr => {
-      const v = getValidCorrect(arr);
+      const v = validArr(arr);
       return v.length ? Math.round(v.reduce((s, d) => s + d.rt, 0) / v.length) : '--';
     };
     const errPct = arr =>
       arr.length
-        ? (arr.filter(d => d.err).length / arr.length * 100).toFixed(1)
-        : '--';
+        ? (arr.filter(d => d.err).length / arr.length * 100).toFixed(1) : '--';
     const nExcl = arr =>
       arr.filter(d => d.err === 0 && (d.rt < 200 || d.rt > 2000)).length;
 
@@ -2256,20 +2247,19 @@ function initSCIAT(runner) {
 
     const fastPct = totalFormal > 0
       ? (fastCount / totalFormal * 100).toFixed(1) : '--';
-    const slowPct = totalFormal > 0                         /* [v3-9] */
+    const slowPct = totalFormal > 0
       ? (slowCount / totalFormal * 100).toFixed(1) : '--';
     const speedFlag = totalFormal > 0 && (fastCount / totalFormal) > 0.10;
-    const slowFlag  = totalFormal > 0 && (slowCount / totalFormal) > 0.10; /* [v3-9] */
+    const slowFlag  = totalFormal > 0 && (slowCount / totalFormal) > 0.10;
 
     /* [v3-8] 动态读取 block 标签 */
-    const compatBlk  = BLOCKS.find(b => b.type === 'compat'   && !b.prac);
+    const compatBlk   = BLOCKS.find(b => b.type === 'compat'   && !b.prac);
     const incompatBlk = BLOCKS.find(b => b.type === 'incompat' && !b.prac);
-    const compatBlkLabel  = compatBlk
-      ? `Block${compatBlk.id}（${compatBlk.leftLbl}）` : '未知';
+    const compatBlkLabel   = compatBlk
+      ? `Block${compatBlk.id}（E:${compatBlk.leftLbl} / I:${compatBlk.rightLbl}）` : '未知';
     const incompatBlkLabel = incompatBlk
-      ? `Block${incompatBlk.id}（${incompatBlk.leftLbl}）` : '未知';
+      ? `Block${incompatBlk.id}（E:${incompatBlk.leftLbl} / I:${incompatBlk.rightLbl}）` : '未知';
 
-    /* 解读 */
     let interp = '', ic = '#94a3b8';
     if (Dnum !== null) {
       if      (Dnum >=  0.65) { interp = '强烈「休息—道德威胁」内隐联结';      ic = '#f87171'; }
@@ -2281,37 +2271,27 @@ function initSCIAT(runner) {
     const barPct = Dnum !== null
       ? Math.min(100, Math.max(0, (Dnum + 1) / 2 * 100)) : 50;
 
-    /* 警告横幅 */
     let warns = '';
     if (Dnum === null) {
-      warns += `
-        <div style="background:rgba(251,191,36,.1);
-          border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;max-width:340px;width:100%;
-          font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
-          有效正确试次不足，D 值无法计算（原因：${calcFlag}）。
-        </div>`;
+      warns += `<div style="background:rgba(251,191,36,.1);
+        border:1px solid rgba(251,191,36,.35);border-radius:10px;
+        padding:10px 14px;max-width:340px;width:100%;
+        font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
+        有效正确试次不足，D 值无法计算（原因：${calcFlag}）。</div>`;
     }
     if (speedFlag) {
-      warns += `
-        <div style="background:rgba(251,191,36,.1);
-          border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;max-width:340px;width:100%;
-          font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
-          ⚠️ 极快反应（RT &lt; 200ms）占比 ${fastPct}%，超过 10% 阈值，
-          请核查该被试数据有效性。
-        </div>`;
+      warns += `<div style="background:rgba(251,191,36,.1);
+        border:1px solid rgba(251,191,36,.35);border-radius:10px;
+        padding:10px 14px;max-width:340px;width:100%;
+        font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
+        ⚠️ 极快反应（RT &lt; 200ms）占比 ${fastPct}%，超过 10%，请核查数据有效性。</div>`;
     }
-    /* [v3-9] 慢反应警告 */
     if (slowFlag) {
-      warns += `
-        <div style="background:rgba(251,191,36,.1);
-          border:1px solid rgba(251,191,36,.35);border-radius:10px;
-          padding:10px 14px;max-width:340px;width:100%;
-          font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
-          ⚠️ 慢速反应（RT &gt; 2000ms）占比 ${slowPct}%，超过 10% 阈值，
-          可能存在走神，请核查数据有效性。
-        </div>`;
+      warns += `<div style="background:rgba(251,191,36,.1);
+        border:1px solid rgba(251,191,36,.35);border-radius:10px;
+        padding:10px 14px;max-width:340px;width:100%;
+        font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
+        ⚠️ 慢速反应（RT &gt; 2000ms）占比 ${slowPct}%，超过 10%，可能存在走神。</div>`;
     }
 
     C().innerHTML = wrap(`
@@ -2322,12 +2302,10 @@ function initSCIAT(runner) {
 
       ${warns}
 
-      <!-- D 值主卡 -->
       <div style="background:rgba(167,139,250,.07);
         border:1.5px solid rgba(167,139,250,.28);
         border-radius:18px;padding:22px 20px;
         max-width:340px;width:100%;margin-bottom:16px">
-
         <div style="text-align:center;margin-bottom:16px">
           <div style="font-size:10px;color:rgba(255,255,255,.4);
             letter-spacing:2px;margin-bottom:6px">SC-IAT D 值</div>
@@ -2353,9 +2331,8 @@ function initSCIAT(runner) {
               background:linear-gradient(90deg,
                 #60a5fa 0%,rgba(255,255,255,.08) 50%,#f87171 100%)"></div>
             <div style="position:absolute;top:50%;left:${barPct}%;
-              transform:translate(-50%,-50%);
-              width:14px;height:14px;border-radius:50%;
-              background:${ic};border:2.5px solid #0a0a12;
+              transform:translate(-50%,-50%);width:14px;height:14px;
+              border-radius:50%;background:${ic};border:2.5px solid #0a0a12;
               box-shadow:0 0 10px ${ic}99;z-index:2"></div>
           </div>
         </div>
@@ -2364,33 +2341,26 @@ function initSCIAT(runner) {
           D = (M_不相容 − M_相容) / SD_合并；仅正确试次；RT 200–2000ms；样本SD(N-1)<br>
           效应量：|D| ≥ 0.15 小 · ≥ 0.35 中 · ≥ 0.65 大
           （Karpinski &amp; Steinman, 2006）<br>
-          Counterbalancing：
-          ${ORDER === 'A' ? '相容先（顺序 A）' : '不相容先（顺序 B）'}
+          Counterbalancing：${ORDER === 'A' ? '相容先（顺序 A）' : '不相容先（顺序 B）'}
         </div>
       </div>
 
-      <!-- 详细指标 -->
       ${cardBox(`
-        ${resultRow('相容块 均RT（有效正确）',
-          cRT !== '--' ? cRT + ' ms' : '--', COL_L)}
-        ${resultRow('不相容块 均RT（有效正确）',
-          iRT !== '--' ? iRT + ' ms' : '--', COL_R)}
+        ${resultRow('相容块 均RT（有效正确）',  cRT !== '--' ? cRT + ' ms' : '--', COL_L)}
+        ${resultRow('不相容块 均RT（有效正确）', iRT !== '--' ? iRT + ' ms' : '--', COL_R)}
         ${resultRow('ΔRT（不相容 − 相容）',
           dRT !== '--' ? (dRT >= 0 ? '+' : '') + dRT + ' ms' : '--', '#fbbf24')}
-        ${resultRow('相容块 错误率', errC + ' %', COL_L)}
+        ${resultRow('相容块 错误率',   errC + ' %', COL_L)}
         ${resultRow('不相容块 错误率', errI + ' %', COL_R)}
-        ${resultRow('相容块 RT窗外排除',
-          exclC + ' / ' + DATA.compat.length, '#94a3b8')}
-        ${resultRow('不相容块 RT窗外排除',
-          exclI + ' / ' + DATA.incompat.length, '#94a3b8')}
-        ${resultRow('极快反应占比（< 200ms）', fastPct + ' %', '#94a3b8')}
+        ${resultRow('相容块 RT窗外排除',   exclC + ' / ' + DATA.compat.length,   '#94a3b8')}
+        ${resultRow('不相容块 RT窗外排除', exclI + ' / ' + DATA.incompat.length, '#94a3b8')}
+        ${resultRow('极快反应占比（< 200ms）',  fastPct + ' %', '#94a3b8')}
         ${resultRow('慢速反应占比（> 2000ms）', slowPct + ' %', '#94a3b8')}
         ${resultRow('被试编号', SUBJECT_ID, '#94a3b8')}
       `)}
 
       <div style="font-size:12px;color:rgba(255,255,255,.38);
-        line-height:1.95;max-width:340px;text-align:center;
-        margin-bottom:22px">
+        line-height:1.95;max-width:340px;text-align:center;margin-bottom:22px">
         D &gt; 0：休息更自动激活道德威胁情绪（leisure guilt 倾向高）。<br>
         <span style="color:rgba(255,255,255,.22)">
           本结果仅供学术参考，不构成临床诊断依据。
@@ -2404,15 +2374,14 @@ function initSCIAT(runner) {
         subject_id:             SUBJECT_ID,
         start_time:             new Date(START_TIME).toISOString(),
         end_time:               new Date().toISOString(),
-        version:                'SC-IAT-v3',
+        version:                'SC-IAT-v4',
         counterbalancing_order: ORDER,
-        /* 计分说明 */
         scoring_method:  '仅正确试次均值，RT窗口200–2000ms，样本SD(N-1)',
         d_formula:       'D = (M_不相容 - M_相容) / SD_合并',
-        /* [v3-8] 动态 block 标签 */
+        trial_ratio:     '目标(rest):配对属性:非配对属性 = 7:7:10（参考 Karpinski & Steinman, 2006）',
+        key_balance:     '相容block E键58.3%，不相容block E键41.7%，被试内均值50.0%',
         compat_block:    compatBlkLabel,
         incompat_block:  incompatBlkLabel,
-        /* 汇总指标 */
         D:               Dnum,
         calc_flag:       calcFlag,
         n_valid_compat:  nValidC,
@@ -2423,10 +2392,9 @@ function initSCIAT(runner) {
         err_compat:      errC,
         err_incompat:    errI,
         speed_flag:      speedFlag,
-        slow_flag:       slowFlag,         /* [v3-9] */
+        slow_flag:       slowFlag,
         fast_rt_pct:     fastPct + '%',
-        slow_rt_pct:     slowPct + '%',    /* [v3-9] */
-        /* 逐试次原始数据 */
+        slow_rt_pct:     slowPct + '%',
         trials_compat:   DATA.compat,
         trials_incompat: DATA.incompat,
         n_compat:        DATA.compat.length,
