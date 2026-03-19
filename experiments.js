@@ -50,7 +50,7 @@ function launchExperiment(type){
     srt:      initSRT,
     dotprobe: initDotProbe,
     digitspan:initDigitSpan,
-    riat:     initRIAT,
+    riat:     initSCIAT,
   };
   if(dispatch[type]) dispatch[type](runner);
 }
@@ -1421,7 +1421,7 @@ function initDigitSpan(runner){
 function initSCIAT(runner) {
   runner.innerHTML = mkBar('SC-IAT 休息—道德联结测验') +
     `<div id="expContent" style="background:#0a0a12;color:#fff;
-      overflow-y:auto;min-height:calc(100vh - 44px)"></div>`;
+      overflow-y:auto;flex:1 1 0;min-height:0"></div>`;
  
   /* ────────────────────────────────────────────────
      刺激材料
@@ -1432,7 +1432,7 @@ function initSCIAT(runner) {
     virtue_prac:   ['欣慰','荣耀','善良','光荣','无私','诚信','崇高','仁慈'],
     virtue_formal: ['自豪','高尚','纯洁','正直','坦荡','仁慈','无私','崇高','诚信','奉献'],
     rest_prac:     ['赖床','刷剧','打盹','歇息','放空','吃瓜','聚餐','闲逛'],
-    rest_formal:   ['逛街','泡澡','刷剧','懒觉','午睡','娱乐','放松','麻将','观影','打牌'],
+    rest_formal:   ['逛街','泡澡','游戏','懒觉','午睡','娱乐','放松','麻将','观影','打牌'],
   };
  
   /* ────────────────────────────────────────────────
@@ -1681,6 +1681,9 @@ function initSCIAT(runner) {
     const isFormel = !blk.prac;
     setPBar(blkIdx * 100 + trialIdx, BLOCKS.length * 100);
  
+    /* Bug4修复：每次进入新试次前，先移除上一个试次可能残留的键盘监听 */
+    document.removeEventListener('keydown', window.__scKeyHandler);
+ 
     needCorrect = false;
     wordShown   = false;
  
@@ -1765,11 +1768,12 @@ function initSCIAT(runner) {
       if (el) { el.style.opacity = '1'; t0 = Date.now(); wordShown = true; }
     }, 400);
  
-    function keyHandler(e) {
+    /* Bug4修复：用具名函数挂到 window，确保可以被精确移除 */
+    window.__scKeyHandler = function(e) {
       if (e.key === 'e' || e.key === 'E') window.__scTap('left');
       if (e.key === 'i' || e.key === 'I') window.__scTap('right');
-    }
-    document.addEventListener('keydown', keyHandler);
+    };
+    document.addEventListener('keydown', window.__scKeyHandler);
  
     window.__scTap = (side) => {
       if (!wordShown) return;
@@ -1784,7 +1788,7 @@ function initSCIAT(runner) {
         return;
       }
  
-      document.removeEventListener('keydown', keyHandler);
+      document.removeEventListener('keydown', window.__scKeyHandler);
       const rt = Date.now() - t0;
       const hadError = needCorrect;
  
@@ -1824,6 +1828,8 @@ function initSCIAT(runner) {
   /* ══ Block 完成过渡 ══ */
   function showBlockDone() {
     blkIdx++;
+    /* Bug5修复：防止越界（如双击导致额外触发） */
+    if (blkIdx >= BLOCKS.length) { phase = 'result'; render(); return; }
     const blk      = BLOCKS[blkIdx];
     const isSwitch = blkIdx === 3;
     setPBar(blkIdx, BLOCKS.length);
