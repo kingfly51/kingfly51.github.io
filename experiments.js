@@ -1405,13 +1405,13 @@ function initSCIAT(runner) {
   const STIM = {
     /* 道德威胁（练习8，正式10，严格不重叠） */
     threat_prac:   ['悔过','愧对','失格','心虚','亏欠','惭色','赎罪','歉疚'],
-    threat_formal: ['羞耻','惭愧','负罪','悔恨','内疚','懊悔','愧疚','自责','遗憾','有愧'],
+    threat_formal: ['羞耻','惭愧','负罪','悔恨','内疚','懊悔','愧疚','自惭','愧色','羞惭'],
 
     /* 道德正向（练习8，正式10，严格不重叠）
        注：正式施测前须对两组词做效价/唤醒度独立评定，
        配对 t 检验确认唤醒度无显著差异（p > .05） */
-    virtue_prac:   ['无愧','心安','纯洁','知足','踏实','自在','释怀','心平'],
-    virtue_formal: ['自豪','坦荡','满足','欣慰','正直','清白','踏实','释然','坦然','端正'],
+    virtue_prac:   ['无愧','心安','坦然','清白','踏实','自在','释怀','心平'],
+    virtue_formal: ['自豪','坦荡','无愧','心安','正直','清白','踏实','释然','坦然','无憾'],
 
     /* 休息词（练习8，正式10，严格不重叠）
        删除游戏/麻将/打牌，替换为中性休息活动 */
@@ -1666,6 +1666,26 @@ function initSCIAT(runner) {
           ).join('')}
         </div>
       </div>
+
+      ${blk.type !== 'attr' ? `
+        <div style="background:rgba(255,255,255,.04);
+          border:1px solid rgba(255,255,255,.1);border-radius:10px;
+          padding:13px 15px;max-width:340px;width:100%;
+          margin-bottom:16px;font-size:13px;
+          color:rgba(255,255,255,.72);line-height:1.85">
+          <div style="font-weight:700;color:rgba(255,255,255,.9);
+            margin-bottom:7px;font-size:13px">📋 操作说明</div>
+          屏幕中央每次出现<strong style="color:#fff">一个词</strong>，
+          根据它所属的类别，按下对应的键：<br><br>
+          · 若该词属于<strong style="color:${COL_L}">左侧</strong>任意一个类别
+          → 按 <strong style="color:${COL_L}">E 键</strong><br>
+          · 若该词属于<strong style="color:${COL_R}">右侧</strong>任意一个类别
+          → 按 <strong style="color:${COL_R}">I 键</strong><br><br>
+          <span style="color:rgba(255,255,255,.45);font-size:12px">
+            每个词只属于一个类别，请<strong style="color:#fbbf24">尽可能又快又准</strong>地作答。
+            答错后会出现提示，按正确键后方可继续。
+          </span>
+        </div>` : ''}
 
       <div style="font-size:12px;color:rgba(255,255,255,.38);
         text-align:center;margin-bottom:20px">
