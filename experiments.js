@@ -1429,6 +1429,33 @@ function initDigitSpan(runner){
      [原版]  D 值方向、计分算法、Counterbalancing、宿主接口
 ══════════════════════════════════════════════════ */
 function initSCIAT(runner) {
+  // 添加触摸优化样式
+  const style = document.createElement('style');
+  style.textContent = `
+    .touch-optimized {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+    }
+    .touch-optimized:active {
+      transform: scale(0.97);
+      opacity: 0.9;
+    }
+    @media (max-width: 768px) {
+      .exp-topbar-title {
+        font-size: 14px !important;
+      }
+      [id^="sc_left_"], [id^="sc_right_"] {
+        padding: 8px !important;
+      }
+      [id^="sc_left_"] div, [id^="sc_right_"] div {
+        font-size: 12px !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
   /* 唯一实例 ID，防止多实例全局命名冲突 */
   const IID = 'sc_' + Math.random().toString(36).slice(2, 8);
 
@@ -1913,224 +1940,278 @@ function initSCIAT(runner) {
 
   /* ══ 试次画面 ════════════════════════════════════════ */
   function showTrial() {
-    const blk      = BLOCKS[blkIdx];
-    const tr       = curTrials[trialIdx];
-    const isFormel = !blk.prac;
-    setPBar(blkIdx * 100 + trialIdx, BLOCKS.length * 100);
+  const blk      = BLOCKS[blkIdx];
+  const tr       = curTrials[trialIdx];
+  const isFormel = !blk.prac;
+  setPBar(blkIdx * 100 + trialIdx, BLOCKS.length * 100);
 
-    document.removeEventListener('keydown', window[`__${IID}_keyHandler`]);
+  document.removeEventListener('keydown', window[`__${IID}_keyHandler`]);
 
-    needCorrect = false;
-    wordShown   = false;
-    window[`__${IID}_firstRT`] = 0;
+  needCorrect = false;
+  wordShown   = false;
+  window[`__${IID}_firstRT`] = 0;
 
-    C().innerHTML = `
-      <div style="position:fixed;inset:44px 0 0 0;display:flex;
-        flex-direction:column;user-select:none;
-        -webkit-user-select:none;touch-action:manipulation">
+  // ============= 修改这里的 HTML 结构 =============
+  C().innerHTML = `
+    <div style="position:fixed;inset:44px 0 0 0;display:flex;
+      flex-direction:column;user-select:none;
+      -webkit-user-select:none;touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent">
 
-        <div style="display:flex;height:60px;flex-shrink:0">
-          <div id="sc_left_${IID}" onclick="${call('tap_left')}"
-            style="flex:1;background:rgba(96,165,250,.07);
-            border-right:0.5px solid rgba(255,255,255,.06);
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;transition:background .1s;padding:0 10px">
-            <div style="text-align:center">
-              <div style="font-size:10px;color:rgba(96,165,250,.55);
-                letter-spacing:1px;margin-bottom:3px">E 键</div>
-              ${blk.leftLbl.split(' / ').map(s =>
-                `<div style="font-size:13px;font-weight:700;
-                  color:${COL_L};line-height:1.4">${s}</div>`
-              ).join('')}
-            </div>
-          </div>
-          <div id="sc_right_${IID}" onclick="${call('tap_right')}"
-            style="flex:1;background:rgba(248,113,113,.07);
-            border-left:0.5px solid rgba(255,255,255,.06);
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;transition:background .1s;padding:0 10px">
-            <div style="text-align:center">
-              <div style="font-size:10px;color:rgba(248,113,113,.55);
-                letter-spacing:1px;margin-bottom:3px">I 键</div>
-              ${blk.rightLbl.split(' / ').map(s =>
-                `<div style="font-size:13px;font-weight:700;
-                  color:${COL_R};line-height:1.4">${s}</div>`
-              ).join('')}
-            </div>
+      <div style="display:flex;height:60px;flex-shrink:0">
+        <div id="sc_left_${IID}" 
+          style="flex:1;background:rgba(96,165,250,.07);
+          border-right:0.5px solid rgba(255,255,255,.06);
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;transition:all 0.15s ease;padding:0 10px;
+          -webkit-tap-highlight-color:transparent;
+          touch-action:manipulation">
+          <div style="text-align:center">
+            <div style="font-size:10px;color:rgba(96,165,250,.55);
+              letter-spacing:1px;margin-bottom:3px">E 键</div>
+            ${blk.leftLbl.split(' / ').map(s =>
+              `<div style="font-size:13px;font-weight:700;
+                color:${COL_L};line-height:1.4">${s}</div>`
+            ).join('')}
           </div>
         </div>
-
-        <div style="flex:1;display:flex;flex-direction:column;
-          align-items:center;justify-content:center">
-
-          ${isFormel ? '' : `
-            <div style="font-size:10px;color:rgba(255,255,255,.22);
-              margin-bottom:14px;letter-spacing:1.5px">
-              练习 ${trialIdx + 1} / ${blk.n}
-            </div>`}
-
-          <div style="position:relative;width:320px;height:80px;
-            display:flex;align-items:center;justify-content:center">
-            <div id="scFix_${IID}"
-              style="position:absolute;inset:0;
-              display:flex;align-items:center;justify-content:center;
-              font-size:32px;color:rgba(255,255,255,.3);
-              transition:opacity .05s;opacity:1">＋</div>
-            <div id="scWord_${IID}"
-              style="position:absolute;inset:0;
-              display:flex;align-items:center;justify-content:center;
-              font-size:clamp(36px,10vw,52px);font-weight:900;
-              letter-spacing:3px;color:#ffffff;
-              transition:opacity .05s;opacity:0">${tr.word}</div>
+        <div id="sc_right_${IID}"
+          style="flex:1;background:rgba(248,113,113,.07);
+          border-left:0.5px solid rgba(255,255,255,.06);
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;transition:all 0.15s ease;padding:0 10px;
+          -webkit-tap-highlight-color:transparent;
+          touch-action:manipulation">
+          <div style="text-align:center">
+            <div style="font-size:10px;color:rgba(248,113,113,.55);
+              letter-spacing:1px;margin-bottom:3px">I 键</div>
+            ${blk.rightLbl.split(' / ').map(s =>
+              `<div style="font-size:13px;font-weight:700;
+                color:${COL_R};line-height:1.4">${s}</div>`
+            ).join('')}
           </div>
-
-          <div id="scFb_${IID}"
-            style="margin-top:24px;font-size:28px;min-height:36px;
-            color:#ef4444;opacity:0;transition:opacity .08s;
-            display:flex;align-items:center;justify-content:center">✗</div>
-
-          ${isFormel ? '' : `
-            <div style="font-size:10px;color:rgba(255,255,255,.15);
-              margin-top:12px">按 E 或 I 作答</div>`}
-        </div>
-
-        <div style="display:flex;height:68px;flex-shrink:0;
-          border-top:0.5px solid rgba(255,255,255,.05)">
-          <div onclick="${call('tap_left')}"
-            style="flex:1;display:flex;align-items:center;
-            justify-content:center;cursor:pointer;
-            color:${COL_L};font-size:24px;font-weight:900;
-            background:rgba(96,165,250,.04)">E</div>
-          <div onclick="${call('tap_right')}"
-            style="flex:1;display:flex;align-items:center;
-            justify-content:center;cursor:pointer;
-            color:${COL_R};font-size:24px;font-weight:900;
-            background:rgba(248,113,113,.04)">I</div>
-        </div>
-      </div>`;
-
-    /* [v3-1] 注视点 jitter 300–600ms，[v3-3] t0 = performance.now() */
-    const fixDur = randInt(300, 600);
-    setTimeout(() => {
-      const fixEl  = document.getElementById(`scFix_${IID}`);
-      const wordEl = document.getElementById(`scWord_${IID}`);
-      if (fixEl)  fixEl.style.opacity  = '0';
-      if (wordEl) wordEl.style.opacity = '1';
-      t0        = performance.now();
-      wordShown = true;
-    }, fixDur);
-
-    window[`__${IID}_keyHandler`] = function(e) {
-      if (e.key === 'e' || e.key === 'E') window[`__${IID}_tap`]('left');
-      if (e.key === 'i' || e.key === 'I') window[`__${IID}_tap`]('right');
-    };
-    document.addEventListener('keydown', window[`__${IID}_keyHandler`]);
-
-    reg('tap_left',  () => window[`__${IID}_tap`]('left'));
-    reg('tap_right', () => window[`__${IID}_tap`]('right'));
-
-    window[`__${IID}_tap`] = (side) => {
-      if (!wordShown) return;
-
-      if (side !== tr.correct) {
-        if (!needCorrect) {
-          window[`__${IID}_firstRT`] = Math.round(performance.now() - t0);
-          needCorrect = true;
-        }
-        if (blk.prac) pracErrCount++;
-        const fb  = document.getElementById(`scFb_${IID}`);
-        if (fb) fb.style.opacity = '1';
-        const cel = document.getElementById(`sc_${tr.correct}_${IID}`);
-        if (cel) cel.style.background = tr.correct === 'left'
-          ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
-        return;
-      }
-
-      document.removeEventListener('keydown', window[`__${IID}_keyHandler`]);
-      const rt       = needCorrect
-        ? window[`__${IID}_firstRT`]
-        : Math.round(performance.now() - t0);
-      const hadError = needCorrect;
-
-      const sel = document.getElementById(`sc_${side}_${IID}`);
-      if (sel) sel.style.background = side === 'left'
-        ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
-      const fb = document.getElementById(`scFb_${IID}`);
-      if (fb) fb.style.opacity = '0';
-
-      if (blk.prac) pracTrialCount++;
-
-      if (!blk.prac) {
-        DATA[blk.type].push({
-          trial_n:  DATA[blk.type].length + 1,
-          block_id: blk.id,
-          word:     tr.word,
-          cat:      tr.cat,
-          correct:  tr.correct,
-          rt,
-          err:      hadError ? 1 : 0,
-        });
-        totalFormal++;
-        if (rt < 200)  fastCount++;
-        if (rt > 2000) slowCount++;
-      }
-
-      /* [v3-2] ISI jitter 400–700ms */
-      setTimeout(() => {
-        trialIdx++;
-        if (trialIdx >= curTrials.length) {
-          if (!blk.prac) {
-            const blkData = DATA[blk.type].filter(d => d.block_id === blk.id);
-            const errRate = blkData.filter(d => d.err).length / blkData.length;
-            if (errRate > 0.30) { phase = 'errAbort'; render(); return; }
-          }
-          if (blk.prac && pracTrialCount > 0) {
-            if (pracErrCount / pracTrialCount > 0.40) {
-              phase = 'pracWarn'; render(); return;
-            }
-          }
-          phase = blkIdx < BLOCKS.length - 1 ? 'blockDone' : 'result';
-        } else {
-          phase = 'trial';
-        }
-        render();
-      }, randInt(400, 700));
-    };
-  }
-
-  /* ══ 练习高错误率警告页 ══════════════════════════════ */
-  function showPracWarn() {
-    setPBar(blkIdx, BLOCKS.length);
-    C().innerHTML = wrap(`
-      <div style="text-align:center;padding:28px 0">
-        <div style="font-size:52px;margin-bottom:14px">⚠️</div>
-        <div style="font-size:19px;font-weight:800;
-          margin-bottom:12px;color:#fbbf24">练习错误率偏高</div>
-        ${cardBox(`
-          <div style="font-size:13px;line-height:1.9;color:rgba(255,255,255,.75)">
-            本练习阶段错误率超过 <strong style="color:#fbbf24">40%</strong>，
-            建议在继续正式任务前重新熟悉规则。<br><br>
-            · 请重新阅读按键规则后再开始<br>
-            · 每次只需判断词语属于左侧还是右侧类别<br>
-            · 不确定时先猜，答错会有提示，按正确键后继续<br><br>
-            <span style="color:rgba(255,255,255,.4);font-size:12px">
-              如选择继续，正式阶段数据仍会被记录分析。
-            </span>
-          </div>
-        `)}
-        <div style="display:flex;gap:10px;max-width:320px;width:100%">
-          ${bigBtn('重新练习 →', call('reprac'), '#fbbf24')}
-          ${bigBtn('继续正式任务', call('skipcont'), '#4b5563')}
         </div>
       </div>
-    `);
-    reg('reprac',   () => { phase = 'blockIntro'; render(); });
-    reg('skipcont', () => {
-      blkIdx++;
-      if (blkIdx >= BLOCKS.length) { phase = 'result'; render(); return; }
-      phase = 'blockIntro'; render();
+
+      <div style="flex:1;display:flex;flex-direction:column;
+        align-items:center;justify-content:center">
+
+        ${isFormel ? '' : `
+          <div style="font-size:10px;color:rgba(255,255,255,.22);
+            margin-bottom:14px;letter-spacing:1.5px">
+            练习 ${trialIdx + 1} / ${blk.n}
+          </div>`}
+
+        <div style="position:relative;width:320px;height:80px;
+          display:flex;align-items:center;justify-content:center">
+          <div id="scFix_${IID}"
+            style="position:absolute;inset:0;
+            display:flex;align-items:center;justify-content:center;
+            font-size:32px;color:rgba(255,255,255,.3);
+            transition:opacity .05s;opacity:1">＋</div>
+          <div id="scWord_${IID}"
+            style="position:absolute;inset:0;
+            display:flex;align-items:center;justify-content:center;
+            font-size:clamp(36px,10vw,52px);font-weight:900;
+            letter-spacing:3px;color:#ffffff;
+            transition:opacity .05s;opacity:0">${tr.word}</div>
+        </div>
+
+        <div id="scFb_${IID}"
+          style="margin-top:24px;font-size:28px;min-height:36px;
+          color:#ef4444;opacity:0;transition:opacity .08s;
+          display:flex;align-items:center;justify-content:center">✗</div>
+
+        ${isFormel ? '' : `
+          <div style="font-size:10px;color:rgba(255,255,255,.15);
+            margin-top:12px">按 E 或 I 作答</div>`}
+      </div>
+
+      <div style="display:flex;height:68px;flex-shrink:0;
+        border-top:0.5px solid rgba(255,255,255,.05)">
+        <div id="sc_btn_left_${IID}"
+          style="flex:1;display:flex;align-items:center;
+          justify-content:center;cursor:pointer;
+          color:${COL_L};font-size:24px;font-weight:900;
+          background:rgba(96,165,250,.04);
+          transition:all 0.15s ease;
+          -webkit-tap-highlight-color:transparent;
+          touch-action:manipulation">E</div>
+        <div id="sc_btn_right_${IID}"
+          style="flex:1;display:flex;align-items:center;
+          justify-content:center;cursor:pointer;
+          color:${COL_R};font-size:24px;font-weight:900;
+          background:rgba(248,113,113,.04);
+          transition:all 0.15s ease;
+          -webkit-tap-highlight-color:transparent;
+          touch-action:manipulation">I</div>
+      </div>
+    </div>`;
+  // ============= HTML 修改结束 =============
+
+  // ============= 在这里添加触摸事件监听 =============
+  // 获取所有可点击元素
+  const leftLabel = document.getElementById(`sc_left_${IID}`);
+  const rightLabel = document.getElementById(`sc_right_${IID}`);
+  const leftBtn = document.getElementById(`sc_btn_left_${IID}`);
+  const rightBtn = document.getElementById(`sc_btn_right_${IID}`);
+
+  // 移除原有的 onclick 属性
+  leftLabel.removeAttribute('onclick');
+  rightLabel.removeAttribute('onclick');
+  leftBtn.removeAttribute('onclick');
+  rightBtn.removeAttribute('onclick');
+
+  // 添加触摸/点击事件处理函数
+  function addTouchHandlers(element, side) {
+    if (!element) return;
+    
+    element.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      element.style.transform = 'scale(0.97)';
+      element.style.background = side === 'left' 
+        ? 'rgba(96,165,250,.2)' 
+        : 'rgba(248,113,113,.2)';
+    }, { passive: false });
+
+    element.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      element.style.transform = 'scale(1)';
+      element.style.background = side === 'left' 
+        ? (element.id.includes('btn') ? 'rgba(96,165,250,.04)' : 'rgba(96,165,250,.07)')
+        : (element.id.includes('btn') ? 'rgba(248,113,113,.04)' : 'rgba(248,113,113,.07)');
+      window[`__${IID}_tap`](side);
+    }, { passive: false });
+
+    element.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      element.style.transform = 'scale(1)';
+      element.style.background = side === 'left' 
+        ? (element.id.includes('btn') ? 'rgba(96,165,250,.04)' : 'rgba(96,165,250,.07)')
+        : (element.id.includes('btn') ? 'rgba(248,113,113,.04)' : 'rgba(248,113,113,.07)');
+    }, { passive: false });
+
+    // 鼠标事件支持
+    element.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      element.style.transform = 'scale(0.97)';
+      element.style.background = side === 'left' 
+        ? 'rgba(96,165,250,.2)' 
+        : 'rgba(248,113,113,.2)';
+    });
+
+    element.addEventListener('mouseup', (e) => {
+      e.preventDefault();
+      element.style.transform = 'scale(1)';
+      element.style.background = side === 'left' 
+        ? (element.id.includes('btn') ? 'rgba(96,165,250,.04)' : 'rgba(96,165,250,.07)')
+        : (element.id.includes('btn') ? 'rgba(248,113,113,.04)' : 'rgba(248,113,113,.07)');
+      window[`__${IID}_tap`](side);
+    });
+
+    element.addEventListener('mouseleave', (e) => {
+      element.style.transform = 'scale(1)';
+      element.style.background = side === 'left' 
+        ? (element.id.includes('btn') ? 'rgba(96,165,250,.04)' : 'rgba(96,165,250,.07)')
+        : (element.id.includes('btn') ? 'rgba(248,113,113,.04)' : 'rgba(248,113,113,.07)');
     });
   }
+
+  // 为所有可点击元素添加触摸处理
+  addTouchHandlers(leftLabel, 'left');
+  addTouchHandlers(rightLabel, 'right');
+  addTouchHandlers(leftBtn, 'left');
+  addTouchHandlers(rightBtn, 'right');
+  // ============= 触摸事件监听添加结束 =============
+
+  /* [v3-1] 注视点 jitter 300–600ms，[v3-3] t0 = performance.now() */
+  const fixDur = randInt(300, 600);
+  setTimeout(() => {
+    const fixEl  = document.getElementById(`scFix_${IID}`);
+    const wordEl = document.getElementById(`scWord_${IID}`);
+    if (fixEl)  fixEl.style.opacity  = '0';
+    if (wordEl) wordEl.style.opacity = '1';
+    t0        = performance.now();
+    wordShown = true;
+  }, fixDur);
+
+  window[`__${IID}_keyHandler`] = function(e) {
+    if (e.key === 'e' || e.key === 'E') window[`__${IID}_tap`]('left');
+    if (e.key === 'i' || e.key === 'I') window[`__${IID}_tap`]('right');
+  };
+  document.addEventListener('keydown', window[`__${IID}_keyHandler`]);
+
+  reg('tap_left',  () => window[`__${IID}_tap`]('left'));
+  reg('tap_right', () => window[`__${IID}_tap`]('right'));
+
+  window[`__${IID}_tap`] = (side) => {
+    if (!wordShown) return;
+
+    if (side !== tr.correct) {
+      if (!needCorrect) {
+        window[`__${IID}_firstRT`] = Math.round(performance.now() - t0);
+        needCorrect = true;
+      }
+      if (blk.prac) pracErrCount++;
+      const fb  = document.getElementById(`scFb_${IID}`);
+      if (fb) fb.style.opacity = '1';
+      const cel = document.getElementById(`sc_${tr.correct}_${IID}`);
+      if (cel) cel.style.background = tr.correct === 'left'
+        ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
+      return;
+    }
+
+    document.removeEventListener('keydown', window[`__${IID}_keyHandler`]);
+    const rt       = needCorrect
+      ? window[`__${IID}_firstRT`]
+      : Math.round(performance.now() - t0);
+    const hadError = needCorrect;
+
+    const sel = document.getElementById(`sc_${side}_${IID}`);
+    if (sel) sel.style.background = side === 'left'
+      ? 'rgba(96,165,250,.28)' : 'rgba(248,113,113,.28)';
+    const fb = document.getElementById(`scFb_${IID}`);
+    if (fb) fb.style.opacity = '0';
+
+    if (blk.prac) pracTrialCount++;
+
+    if (!blk.prac) {
+      DATA[blk.type].push({
+        trial_n:  DATA[blk.type].length + 1,
+        block_id: blk.id,
+        word:     tr.word,
+        cat:      tr.cat,
+        correct:  tr.correct,
+        rt,
+        err:      hadError ? 1 : 0,
+      });
+      totalFormal++;
+      if (rt < 200)  fastCount++;
+      if (rt > 2000) slowCount++;
+    }
+
+    /* [v3-2] ISI jitter 400–700ms */
+    setTimeout(() => {
+      trialIdx++;
+      if (trialIdx >= curTrials.length) {
+        if (!blk.prac) {
+          const blkData = DATA[blk.type].filter(d => d.block_id === blk.id);
+          const errRate = blkData.filter(d => d.err).length / blkData.length;
+          if (errRate > 0.30) { phase = 'errAbort'; render(); return; }
+        }
+        if (blk.prac && pracTrialCount > 0) {
+          if (pracErrCount / pracTrialCount > 0.40) {
+            phase = 'pracWarn'; render(); return;
+          }
+        }
+        phase = blkIdx < BLOCKS.length - 1 ? 'blockDone' : 'result';
+      } else {
+        phase = 'trial';
+      }
+      render();
+    }, randInt(400, 700));
+  };
+}
 
   /* ══ Block 完成过渡 ══════════════════════════════════ */
   function showBlockDone() {
