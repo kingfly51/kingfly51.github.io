@@ -1,6 +1,6 @@
 // app-fixed.js - 修复日历问题的版本
 
-const API_URL = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+const API_URL = 'http://39.105.197.176:9000';
 let token = localStorage.getItem('token');
 let username = localStorage.getItem('username');
 let currentPage = 'conversations';
