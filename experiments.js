@@ -106,7 +106,7 @@ function fixCross(opacity='.5'){
     font-weight:100;line-height:1;letter-spacing:0;margin:16px 0">＋</div>`;
 }
 
-const API_BASE = 'https://psych-chat-fbfnuvfetv.cn-hongkong.fcapp.run';
+const API_BASE = 'http://39.105.197.176:9000';
 
 async function saveExp(type, data){
   try{
