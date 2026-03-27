@@ -658,7 +658,7 @@ async function saveResult(){
   localStorage.setItem('ts_cc',JSON.stringify(cnt));
   try{
     const tok=localStorage.getItem('token')||'';
-    const API_BASE='http://39.105.197.176:9000';
+    const API_BASE='https://api.psych-tjzxs.site';
     await fetch(API_BASE+'/api/experiments/result?token='+encodeURIComponent(tok),{
       method:'POST',
       headers:{'Content-Type':'text/plain'},
