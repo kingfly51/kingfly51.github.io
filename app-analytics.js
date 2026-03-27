@@ -1,6 +1,6 @@
 // app-analytics.js - 带完整数据追踪和图片保存的版本
 
-const API_URL = 'http://39.105.197.176:9000';
+const API_URL = 'https://api.psych-tjzxs.site';
 let token = localStorage.getItem('token');
 let username = localStorage.getItem('username');
 let currentPage = 'conversations';
